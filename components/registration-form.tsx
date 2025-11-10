@@ -399,37 +399,87 @@ export function RegistrationForm() {
 
         {currentStep === "requirements" && (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground mb-8">Requirements</h2>
-            <div className="space-y-4 text-foreground/70">
-              <div className="flex gap-4">
-                <Check className="w-6 h-6 text-primary flex-shrink-0" />
-                <p>Valid Indonesian ID or Passport</p>
-              </div>
-              <div className="flex gap-4">
-                <Check className="w-6 h-6 text-primary flex-shrink-0" />
-                <p>Vehicle ownership certificate (STNK)</p>
-              </div>
-              <div className="flex gap-4">
-                <Check className="w-6 h-6 text-primary flex-shrink-0" />
-                <p>Valid driver's license</p>
-              </div>
-              <div className="flex gap-4">
-                <Check className="w-6 h-6 text-primary flex-shrink-0" />
-                <p>Mercedes-Benz W205 ownership proof</p>
+          <h2 className="text-2xl font-bold text-foreground mb-8">
+            SYARAT MENJADI MEMBER MERCEDES-BENZ W 205 CI
+          </h2>
+          
+          <div className="space-y-6">
+            <div className="flex gap-3 items-start">
+              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="font-bold text-foreground mb-2">1. Persyaratan Umum</p>
+                <ul className="space-y-1 text-foreground/70">
+                  <li>• Pemilik dan pengguna Mercedes-Benz W 205 (C-Class).</li>
+                  <li>• Usia minimal 17 tahun atau memiliki SIM A aktif.</li>
+                  <li>• Bersedia mengikuti AD/ART dan tata tertib komunitas.</li>
+                  <li>• Memiliki semangat kebersamaan, persaudaraan, dan solidaritas.</li>
+                </ul>
               </div>
             </div>
-            <div className="border-t border-border pt-6 mt-8 flex gap-4">
-              <Button onClick={() => setCurrentStep("registration")} variant="outline" className="flex-1">
-                Back
-              </Button>
-              <Button
-                onClick={() => setCurrentStep("inauguration")}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white"
-              >
-                Continue
-              </Button>
+        
+            <div className="flex gap-3 items-start">
+              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="font-bold text-foreground mb-2">2. Administrasi</p>
+                <ul className="space-y-1 text-foreground/70">
+                  <li>• Mengisi Formulir Pendaftaran Anggota (online/offline).</li>
+                  <li>• Menyertakan fotokopi KTP dan STNK kendaraan.</li>
+                  <li>• Membayar biaya registrasi dan iuran tahunan sesuai ketentuan komunitas.</li>
+                </ul>
+              </div>
+            </div>
+        
+            <div className="flex gap-3 items-start">
+              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="font-bold text-foreground mb-2">3. Persyaratan Aktivitas Wajib</p>
+                <ul className="space-y-1 text-foreground/70">
+                  <li>• Mengikuti minimal 2 kali SOTR (Saturday On The Road) bersama komunitas.</li>
+                  <li>• Mengikuti minimal 1 kali touring menginap bersama komunitas.</li>
+                  <li>• Aktif berpartisipasi dalam kegiatan resmi komunitas maupun nasional.</li>
+                </ul>
+              </div>
+            </div>
+        
+            <div className="flex gap-3 items-start">
+              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="font-bold text-foreground mb-2">4. Hak Member</p>
+                <ul className="space-y-1 text-foreground/70">
+                  <li>• Mendapat KTA (Kartu Tanda Anggota) resmi Mercedes-Benz W 205 CI.</li>
+                  <li>• Berhak mengikuti semua kegiatan resmi komunitas maupun nasional.</li>
+                  <li>• Akses ke merchandise resmi, grup komunikasi, dan jaringan komunitas.</li>
+                  <li>• Kesempatan mengikuti event, touring, gathering, dan jamboree nasional.</li>
+                </ul>
+              </div>
+            </div>
+        
+            <div className="flex gap-3 items-start">
+              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <p className="font-bold text-foreground mb-2">5. Kewajiban Member</p>
+                <ul className="space-y-1 text-foreground/70">
+                  <li>• Menjaga nama baik komunitas di jalan maupun di luar komunitas.</li>
+                  <li>• Aktif dalam kegiatan komunitas dan mendukung program bersama.</li>
+                  <li>• Membayar iuran tepat waktu.</li>
+                  <li>• Menjaga sikap saling menghormati antar anggota tanpa memandang latar belakang.</li>
+                </ul>
+              </div>
             </div>
           </div>
+        
+          <div className="border-t border-border pt-6 mt-8 flex gap-4">
+            <Button onClick={() => setCurrentStep("registration")} variant="outline" className="flex-1">
+              Back
+            </Button>
+            <Button
+              onClick={() => setCurrentStep("inauguration")}
+              className="flex-1 bg-primary hover:bg-primary/90 text-white"
+            >
+              Continue
+            </Button>
+          </div>
+        </div>
         )}
 
         {currentStep === "inauguration" && (
