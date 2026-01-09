@@ -70,6 +70,27 @@ Ensure your `docker-compose.yml` and `Dockerfile` are present in the root.
 
 ---
 
+## 3. Production Deployment (Dokploy / VPS)
+
+For production environments (like Hostinger VPS with Dokploy), use the optimized `docker-compose.prod.yml`.
+
+1.  **Configuration**:
+    - Ensure your Dokploy or VPS uses `docker-compose.prod.yml` instead of the default file.
+    - Set the environment variables in your VPS dashboard or create a `.env.production` file based on the template.
+
+2.  **Key Differences**:
+    - **Restart Policy**: Services restart `always`.
+    - **Resource Limits**: CPU and Memory limits are defined to prevent server crashes.
+    - **Health Checks**: Integrated health checks for auto-healing.
+    - **Logging**: JSON logging with rotation to save disk space.
+    - **External Database**: The file is configured to connect to your external Postgres database, not an internal container.
+
+3.  **Command**:
+    ```bash
+    docker-compose -f docker-compose.prod.yml up -d --build
+    ```
+
+
 ## 3. Manual / VPS Deployment
 
 If you prefer running without Docker:
