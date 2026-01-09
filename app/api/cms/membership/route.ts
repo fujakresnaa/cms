@@ -1,31 +1,12 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
+import pool from "@/lib/db"
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
+    const { rows } = await pool.query("SELECT * FROM cms_membership LIMIT 1")
+    const data = rows[0]
 
-    const { data, error } = await supabase.from("cms_membership").select("*").single()
-
-    if (error) {
-      console.error("[v0] Membership fetch error:", error)
+    if (!data) {
       return NextResponse.json({
         id: "default",
         title: "Join the Brotherhood",
@@ -45,7 +26,7 @@ export async function GET() {
       stats,
     })
   } catch (error) {
-    console.error("[v0] Membership catch error:", error)
+    console.error("[mrc] Membership catch error:", error)
     return NextResponse.json({
       id: "default",
       title: "Join the Brotherhood",
@@ -62,37 +43,24 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
 
     const updateData = {
       title: body.title,
       description: body.description,
-      stats: body.stats,
+      stats: JSON.stringify(body.stats),
     }
 
-    const { data, error } = await supabase.from("cms_membership").update(updateData).eq("id", body.id).select().single()
+    const { rows } = await pool.query(
+      "UPDATE cms_membership SET title = $1, description = $2, stats = $3 WHERE id = $4 RETURNING *",
+      [updateData.title, updateData.description, updateData.stats, body.id]
+    )
 
-    if (error) {
-      console.error("[v0] Membership update error:", error)
+    if (rows.length === 0) {
+      console.error("[mrc] Membership update error: Not found")
       return NextResponse.json({ error: "Failed to update" }, { status: 500 })
     }
 
+    const data = rows[0]
     const stats = typeof data.stats === "string" ? JSON.parse(data.stats) : data.stats || []
 
     return NextResponse.json({
@@ -100,7 +68,7 @@ export async function PUT(request: NextRequest) {
       stats,
     })
   } catch (error) {
-    console.error("[v0] Membership put catch error:", error)
+    console.error("[mrc] Membership put catch error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

@@ -8,7 +8,7 @@ Successfully implemented comprehensive fixes and enhancements for the MRC Club A
 **Status**: Complete
 
 **Changes Made**:
-- Added Vercel Blob integration for secure image storage
+- Added local filesystem storage for images
 - Created `/api/upload` endpoint for file uploads
 - Updated registration flow to capture and store vehicle photos
 - Modified admin dashboard to display uploaded images
@@ -106,9 +106,9 @@ Successfully implemented comprehensive fixes and enhancements for the MRC Club A
 ### Architecture Improvements
 
 1. **Image Storage**
-   - Images stored in Vercel Blob (not in database)
+   - Images stored locally in public/uploads
    - URLs stored in database for reference
-   - Secure, scalable image delivery
+   - Simple and reliable file serving
 
 2. **API Enhancement**
    - Proper error handling across all endpoints
@@ -148,7 +148,7 @@ Successfully implemented comprehensive fixes and enhancements for the MRC Club A
 
 1. **Local Development**: `npm run dev`
 2. **Docker Local**: `docker-compose up -d`
-3. **Vercel**: Push to GitHub, auto-deploy
+3. **Production**: Deploy to any Node.js host
 4. **VPS/Server**: Docker Compose deployment
 5. **Kubernetes**: Container-ready for orchestration
 
@@ -173,9 +173,7 @@ All major features have been implemented:
 
 ## Next Steps
 
-1. **Set Environment Variables**:
    - Add Supabase credentials to `.env.local`
-   - Add Vercel Blob token
 
 2. **Run Database Migrations**:
    - Execute SQL scripts in Supabase

@@ -64,7 +64,17 @@ export function EventsSection() {
               key={event.id}
               className="p-8 bg-white hover:shadow-lg transition-shadow duration-300 border border-gray-200"
             >
-              <div className="text-4xl mb-4">{event.icon || "🎯"}</div>
+              <div className="text-4xl mb-4">
+                {(event.icon?.startsWith('/') || event.icon?.startsWith('http')) ? (
+                  <img
+                    src={event.icon}
+                    alt={event.title}
+                    className="w-12 h-12 object-contain"
+                  />
+                ) : (
+                  event.icon || "🎯"
+                )}
+              </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">{event.title}</h3>
               <p className="text-gray-600 leading-relaxed text-sm">{event.description}</p>
             </Card>

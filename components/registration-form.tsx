@@ -5,7 +5,8 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Check, Upload, AlertCircle } from "lucide-react"
+import { Check, Upload, AlertCircle, ChevronRight, ChevronLeft } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 
 type RegistrationStep = "registration" | "requirements" | "inauguration" | "member"
 
@@ -150,412 +151,455 @@ export function RegistrationForm() {
     }
   }
 
+  // Styles
+  const glassCard = "bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl"
+  const inputStyle = "w-full px-4 py-3 rounded-lg bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]/50 transition-all font-sans"
+  const labelStyle = "block text-sm font-semibold text-white/90 mb-2 font-serif tracking-wide"
+  const headingStyle = "text-3xl font-serif font-bold text-white mb-8"
+
+  const fadeIn = {
+    initial: { opacity: 0, y: 10 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -10 },
+    transition: { duration: 0.4 }
+  }
+
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
       {/* Progress Stepper */}
-      <div className="mb-12">
-        <div className="flex items-center justify-between">
+      <div className="mb-12 relative px-4">
+        <div className="flex items-center justify-between relative z-10">
           {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center flex-1">
-              <div className="flex flex-col items-center flex-1">
-                <button
-                  onClick={() => {
-                    if (index < steps.findIndex((s) => s.id === currentStep)) {
-                      setCurrentStep(step.id)
-                    }
-                  }}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-all ${
-                    step.id === currentStep
-                      ? "bg-primary text-white ring-4 ring-primary/30"
-                      : steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep)
-                        ? "bg-primary text-white"
-                        : "bg-white/20 text-white/60"
+            <div key={step.id} className="flex flex-col items-center relative group cursor-pointer"
+              onClick={() => {
+                if (index < steps.findIndex((s) => s.id === currentStep)) {
+                  setCurrentStep(step.id)
+                }
+              }}>
+              <motion.div
+                initial={false}
+                animate={{
+                  scale: step.id === currentStep ? 1.1 : 1,
+                  backgroundColor: step.id === currentStep || steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep) ? "#D4AF37" : "rgba(255,255,255,0.1)",
+                  borderColor: step.id === currentStep ? "#D4AF37" : "rgba(255,255,255,0.2)"
+                }}
+                className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg border-2 shadow-lg transition-colors duration-300 ${step.id === currentStep || steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep)
+                  ? "text-black"
+                  : "text-white/60"
                   }`}
-                >
-                  {steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep) ? (
-                    <Check className="w-6 h-6" />
-                  ) : (
-                    <span>{index + 1}</span>
-                  )}
-                </button>
+              >
+                {steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep) ? (
+                  <Check className="w-6 h-6" />
+                ) : (
+                  <span>{index + 1}</span>
+                )}
+              </motion.div>
+              <div className="absolute top-14 w-32 text-center">
                 <span
-                  className={`text-xs font-medium mt-2 ${step.id === currentStep ? "text-white" : "text-white/60"}`}
+                  className={`text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${step.id === currentStep ? "text-[#D4AF37]" : "text-white/40"
+                    }`}
                 >
                   {step.label}
                 </span>
               </div>
-
-              {index < steps.length - 1 && (
-                <div
-                  className={`h-1 flex-1 mx-2 rounded-full ${
-                    steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep) ? "bg-primary" : "bg-white/20"
-                  }`}
-                />
-              )}
             </div>
           ))}
+        </div>
+
+        {/* Connection Lines */}
+        <div className="absolute top-6 left-0 w-full px-12 sm:px-16 -z-0">
+          <div className="h-0.5 w-full bg-white/10 rounded-full" />
+          <motion.div
+            className="absolute top-0 left-12 sm:left-16 h-0.5 bg-[#D4AF37] rounded-full"
+            initial={false}
+            animate={{ width: `${(steps.findIndex((s) => s.id === currentStep) / (steps.length - 1)) * 100}%` }}
+            transition={{ duration: 0.5, ease: "easeInOut" }}
+            style={{ maxWidth: 'calc(100% - 6rem)' }}
+          />
         </div>
       </div>
 
       {/* Form Content */}
-      <Card className="bg-white/95 backdrop-blur-sm border-white/20 p-8 md:p-12 rounded-2xl shadow-2xl">
-        {currentStep === "registration" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground mb-8">Member Registration</h2>
+      <Card className={`${glassCard} p-8 md:p-12 overflow-hidden relative`}>
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent opacity-50" />
 
-            {/* Full Name */}
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Full Name <span className="text-accent">*</span>
-              </label>
-              <input
-                type="text"
-                name="namaLengkap"
-                value={formData.namaLengkap}
-                onChange={handleInputChange}
-                placeholder="Enter your full name"
-                className={`w-full px-4 py-3 rounded-lg bg-background border transition-colors ${
-                  errors.namaLengkap ? "border-accent" : "border-border"
-                } focus:outline-none focus:ring-2 focus:ring-primary/50`}
-              />
-              {errors.namaLengkap && (
-                <p className="text-sm text-accent mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" /> {errors.namaLengkap}
-                </p>
-              )}
-            </div>
+        <AnimatePresence mode="wait">
+          {currentStep === "registration" && (
+            <motion.div key="registration" {...fadeIn} className="space-y-6">
+              <h2 className={headingStyle}>Member Registration</h2>
 
-            {/* Email and Car Variant */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Full Name */}
               <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Email Address <span className="text-accent">*</span>
-                </label>
-                <input
-                  type="email"
-                  name="alamatEmail"
-                  value={formData.alamatEmail}
-                  onChange={handleInputChange}
-                  placeholder="Enter email address"
-                  className={`w-full px-4 py-3 rounded-lg bg-background border transition-colors ${
-                    errors.alamatEmail ? "border-accent" : "border-border"
-                  } focus:outline-none focus:ring-2 focus:ring-primary/50`}
-                />
-                {errors.alamatEmail && (
-                  <p className="text-sm text-accent mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" /> {errors.alamatEmail}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Car Variant <span className="text-accent">*</span>
-                </label>
-                <select
-                  name="tipeMobile"
-                  value={formData.tipeMobile}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="C180">C180</option>
-                  <option value="C200">C200</option>
-                  <option value="C250">C250</option>
-                  <option value="C300">C300</option>
-                  <option value="C43">C43</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Phone and Year */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Phone Number <span className="text-accent">*</span>
-                </label>
-                <input
-                  type="tel"
-                  name="nomorTelephone"
-                  value={formData.nomorTelephone}
-                  onChange={handleInputChange}
-                  placeholder="+62 or 08"
-                  className={`w-full px-4 py-3 rounded-lg bg-background border transition-colors ${
-                    errors.nomorTelephone ? "border-accent" : "border-border"
-                  } focus:outline-none focus:ring-2 focus:ring-primary/50`}
-                />
-                {errors.nomorTelephone && (
-                  <p className="text-sm text-accent mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" /> {errors.nomorTelephone}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  Year Car <span className="text-accent">*</span>
-                </label>
-                <input
-                  type="number"
-                  name="tahunKendaraan"
-                  value={formData.tahunKendaraan}
-                  onChange={handleInputChange}
-                  min="1990"
-                  max={new Date().getFullYear()}
-                  className="w-full px-4 py-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-              </div>
-            </div>
-
-            {/* City and License Plate */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  City/Domicile <span className="text-accent">*</span>
-                </label>
-                <select
-                  name="chapterDomisili"
-                  value={formData.chapterDomisili}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg bg-background border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="Tangerang">Tangerang</option>
-                  <option value="Jakarta">Jakarta</option>
-                  <option value="Bekasi">Bekasi</option>
-                  <option value="Bandung">Bandung</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-foreground mb-2">
-                  License Plate <span className="text-accent">*</span>
+                <label className={labelStyle}>
+                  Full Name <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="text"
-                  name="nomorPolisi"
-                  value={formData.nomorPolisi}
+                  name="namaLengkap"
+                  value={formData.namaLengkap}
                   onChange={handleInputChange}
-                  placeholder="Enter license plate"
-                  className={`w-full px-4 py-3 rounded-lg bg-background border transition-colors ${
-                    errors.nomorPolisi ? "border-accent" : "border-border"
-                  } focus:outline-none focus:ring-2 focus:ring-primary/50`}
+                  placeholder="Enter your full name"
+                  className={`${inputStyle} ${errors.namaLengkap ? "border-red-400 focus:border-red-400 focus:ring-red-400/20" : ""}`}
                 />
-                {errors.nomorPolisi && (
-                  <p className="text-sm text-accent mt-1 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" /> {errors.nomorPolisi}
+                {errors.namaLengkap && (
+                  <p className="text-sm text-red-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" /> {errors.namaLengkap}
                   </p>
                 )}
               </div>
-            </div>
 
-            {/* Photo Upload */}
-            <div>
-              <label className="block text-sm font-semibold text-foreground mb-2">
-                Photo with Vehicle <span className="text-accent">*</span>
-              </label>
-              <div
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                  errors.fotoKendaraan
-                    ? "border-accent bg-accent/5"
-                    : formData.fotoKendaraan
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50 hover:bg-primary/5"
-                }`}
-              >
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  id="photo-upload"
-                />
-                <label htmlFor="photo-upload" className="cursor-pointer block">
-                  <Upload className="w-8 h-8 mx-auto mb-2 text-foreground/60" />
-                  <p className="font-medium text-foreground">
-                    {formData.fotoKendaraan ? formData.fotoKendaraan.name : "Click to upload or drag and drop"}
-                  </p>
-                  <p className="text-sm text-foreground/60 mt-1">PNG, JPG or WEBP (Max 5MB)</p>
+              {/* Email and Car Variant */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelStyle}>
+                    Email Address <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="alamatEmail"
+                    value={formData.alamatEmail}
+                    onChange={handleInputChange}
+                    placeholder="Enter email address"
+                    className={`${inputStyle} ${errors.alamatEmail ? "border-red-400 focus:border-red-400 focus:ring-red-400/20" : ""}`}
+                  />
+                  {errors.alamatEmail && (
+                    <p className="text-sm text-red-400 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> {errors.alamatEmail}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className={labelStyle}>
+                    Car Variant <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="tipeMobile"
+                      value={formData.tipeMobile}
+                      onChange={handleInputChange}
+                      className={`${inputStyle} appearance-none cursor-pointer`}
+                    >
+                      <option value="C180" className="text-black">C180</option>
+                      <option value="C200" className="text-black">C200</option>
+                      <option value="C250" className="text-black">C250</option>
+                      <option value="C300" className="text-black">C300</option>
+                      <option value="C43" className="text-black">C43</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none">
+                      <ChevronRight className="w-5 h-5 rotate-90" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Phone and Year */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelStyle}>
+                    Phone Number <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="nomorTelephone"
+                    value={formData.nomorTelephone}
+                    onChange={handleInputChange}
+                    placeholder="+62 or 08"
+                    className={`${inputStyle} ${errors.nomorTelephone ? "border-red-400 focus:border-red-400 focus:ring-red-400/20" : ""}`}
+                  />
+                  {errors.nomorTelephone && (
+                    <p className="text-sm text-red-400 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> {errors.nomorTelephone}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className={labelStyle}>
+                    Year Car <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="tahunKendaraan"
+                    value={formData.tahunKendaraan}
+                    onChange={handleInputChange}
+                    min="1990"
+                    max={new Date().getFullYear()}
+                    className={inputStyle}
+                  />
+                </div>
+              </div>
+
+              {/* City and License Plate */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelStyle}>
+                    City/Domicile <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <select
+                      name="chapterDomisili"
+                      value={formData.chapterDomisili}
+                      onChange={handleInputChange}
+                      className={`${inputStyle} appearance-none cursor-pointer`}
+                    >
+                      <option value="Tangerang" className="text-black">Tangerang</option>
+                      <option value="Jakarta" className="text-black">Jakarta</option>
+                      <option value="Bekasi" className="text-black">Bekasi</option>
+                      <option value="Bandung" className="text-black">Bandung</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none">
+                      <ChevronRight className="w-5 h-5 rotate-90" />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelStyle}>
+                    License Plate <span className="text-red-400">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="nomorPolisi"
+                    value={formData.nomorPolisi}
+                    onChange={handleInputChange}
+                    placeholder="Enter license plate"
+                    className={`${inputStyle} ${errors.nomorPolisi ? "border-red-400 focus:border-red-400 focus:ring-red-400/20" : ""}`}
+                  />
+                  {errors.nomorPolisi && (
+                    <p className="text-sm text-red-400 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-4 h-4" /> {errors.nomorPolisi}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Photo Upload */}
+              <div>
+                <label className={labelStyle}>
+                  Photo with Vehicle <span className="text-red-400">*</span>
                 </label>
+                <div
+                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all group ${errors.fotoKendaraan
+                    ? "border-red-400 bg-red-400/5"
+                    : formData.fotoKendaraan
+                      ? "border-[#D4AF37] bg-[#D4AF37]/5"
+                      : "border-white/20 hover:border-[#D4AF37]/50 hover:bg-white/5"
+                    }`}
+                >
+                  <input
+                    type="file"
+                    onChange={handleFileChange}
+                    accept="image/jpeg,image/png,image/webp"
+                    className="hidden"
+                    id="photo-upload"
+                  />
+                  <label htmlFor="photo-upload" className="cursor-pointer block">
+                    <div className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center transition-colors ${formData.fotoKendaraan ? "bg-[#D4AF37]/20 text-[#D4AF37]" : "bg-white/5 text-white/40 group-hover:bg-[#D4AF37]/10 group-hover:text-[#D4AF37]"
+                      }`}>
+                      <Upload className="w-8 h-8" />
+                    </div>
+                    <p className="font-medium text-white text-lg">
+                      {formData.fotoKendaraan ? formData.fotoKendaraan.name : "Click to upload or drag and drop"}
+                    </p>
+                    <p className="text-sm text-white/40 mt-2">PNG, JPG or WEBP (Max 5MB)</p>
+                  </label>
+                </div>
+                {errors.fotoKendaraan && (
+                  <p className="text-sm text-red-400 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" /> {errors.fotoKendaraan}
+                  </p>
+                )}
               </div>
-              {errors.fotoKendaraan && (
-                <p className="text-sm text-accent mt-1 flex items-center gap-1">
-                  <AlertCircle className="w-4 h-4" /> {errors.fotoKendaraan}
-                </p>
+
+              {errors.submit && (
+                <div className="bg-red-400/10 border border-red-400 text-red-400 p-4 rounded-lg flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <span>{errors.submit}</span>
+                </div>
               )}
-            </div>
 
-            {errors.submit && (
-              <div className="bg-accent/10 border border-accent text-accent p-4 rounded-lg flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <span>{errors.submit}</span>
-              </div>
-            )}
-
-            {/* Continue Button */}
-            <Button onClick={handleNext} className="w-full bg-primary hover:bg-primary/90 text-white py-3 text-lg">
-              Continue Registration →
-            </Button>
-          </div>
-        )}
-
-        {currentStep === "requirements" && (
-          <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-foreground mb-8">
-            SYARAT MENJADI MEMBER MERCEDES-BENZ W 205 CI
-          </h2>
-          
-          <div className="space-y-6">
-            <div className="flex gap-3 items-start">
-              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <p className="font-bold text-foreground mb-2">1. Persyaratan Umum</p>
-                <ul className="space-y-1 text-foreground/70">
-                  <li>• Pemilik dan pengguna Mercedes-Benz W 205 (C-Class).</li>
-                  <li>• Usia minimal 17 tahun atau memiliki SIM A aktif.</li>
-                  <li>• Bersedia mengikuti AD/ART dan tata tertib komunitas.</li>
-                  <li>• Memiliki semangat kebersamaan, persaudaraan, dan solidaritas.</li>
-                </ul>
-              </div>
-            </div>
-        
-            <div className="flex gap-3 items-start">
-              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <p className="font-bold text-foreground mb-2">2. Administrasi</p>
-                <ul className="space-y-1 text-foreground/70">
-                  <li>• Mengisi Formulir Pendaftaran Anggota (online/offline).</li>
-                  <li>• Menyertakan fotokopi KTP dan STNK kendaraan.</li>
-                  <li>• Membayar biaya registrasi dan iuran tahunan sesuai ketentuan komunitas.</li>
-                </ul>
-              </div>
-            </div>
-        
-            <div className="flex gap-3 items-start">
-              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <p className="font-bold text-foreground mb-2">3. Persyaratan Aktivitas Wajib</p>
-                <ul className="space-y-1 text-foreground/70">
-                  <li>• Mengikuti minimal 2 kali SOTR (Saturday On The Road) bersama komunitas.</li>
-                  <li>• Mengikuti minimal 1 kali touring menginap bersama komunitas.</li>
-                  <li>• Aktif berpartisipasi dalam kegiatan resmi komunitas maupun nasional.</li>
-                </ul>
-              </div>
-            </div>
-        
-            <div className="flex gap-3 items-start">
-              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <p className="font-bold text-foreground mb-2">4. Hak Member</p>
-                <ul className="space-y-1 text-foreground/70">
-                  <li>• Mendapat KTA (Kartu Tanda Anggota) resmi Mercedes-Benz W 205 CI.</li>
-                  <li>• Berhak mengikuti semua kegiatan resmi komunitas maupun nasional.</li>
-                  <li>• Akses ke merchandise resmi, grup komunikasi, dan jaringan komunitas.</li>
-                  <li>• Kesempatan mengikuti event, touring, gathering, dan jamboree nasional.</li>
-                </ul>
-              </div>
-            </div>
-        
-            <div className="flex gap-3 items-start">
-              <Check className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <p className="font-bold text-foreground mb-2">5. Kewajiban Member</p>
-                <ul className="space-y-1 text-foreground/70">
-                  <li>• Menjaga nama baik komunitas di jalan maupun di luar komunitas.</li>
-                  <li>• Aktif dalam kegiatan komunitas dan mendukung program bersama.</li>
-                  <li>• Membayar iuran tepat waktu.</li>
-                  <li>• Menjaga sikap saling menghormati antar anggota tanpa memandang latar belakang.</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        
-          <div className="border-t border-border pt-6 mt-8 flex gap-4">
-            <Button onClick={() => setCurrentStep("registration")} variant="outline" className="flex-1">
-              Back
-            </Button>
-            <Button
-              onClick={() => setCurrentStep("inauguration")}
-              className="flex-1 bg-primary hover:bg-primary/90 text-white"
-            >
-              Continue
-            </Button>
-          </div>
-        </div>
-        )}
-
-        {currentStep === "inauguration" && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-foreground mb-8">Inauguration Process</h2>
-            <div className="space-y-4 text-foreground/70">
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                  1
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">Application Review</p>
-                  <p className="text-sm">Our team reviews your application within 3-5 business days</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                  2
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">Member Verification</p>
-                  <p className="text-sm">Verification of vehicle and personal information</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                  3
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">Welcome Meeting</p>
-                  <p className="text-sm">Attend our welcome gathering with existing members</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold">
-                  4
-                </div>
-                <div>
-                  <p className="font-semibold text-foreground">Official Membership</p>
-                  <p className="text-sm">Receive your member certificate and ID</p>
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-border pt-6 mt-8 flex gap-4">
-              <Button onClick={() => setCurrentStep("requirements")} variant="outline" className="flex-1">
-                Back
+              {/* Continue Button */}
+              <Button onClick={handleNext} className="w-full bg-[#D4AF37] hover:bg-[#B5952F] text-black py-6 text-lg font-bold shadow-lg shadow-[#D4AF37]/20 transition-all hover:scale-[1.01]">
+                Continue Registration <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white"
+            </motion.div>
+          )}
+
+          {currentStep === "requirements" && (
+            <motion.div key="requirements" {...fadeIn} className="space-y-6">
+              <h2 className={headingStyle}>
+                Terms & Requirements
+              </h2>
+
+              <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div className="flex gap-4 items-start p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-[#D4AF37] font-bold">1</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-serif font-bold text-white mb-2 text-lg">General Requirements</p>
+                    <ul className="space-y-2 text-white/70">
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Owner and user of Mercedes-Benz W 205 (C-Class).</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Minimum age 17 years or active driver's license.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Willing to follow AD/ART and community rules.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 items-start p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-[#D4AF37] font-bold">2</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-serif font-bold text-white mb-2 text-lg">Administration</p>
+                    <ul className="space-y-2 text-white/70">
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Fill out Member Registration Form.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Provide KTP and STNK copy.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Pay registration and annual fees.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 items-start p-4 rounded-lg bg-white/5 border border-white/10">
+                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-[#D4AF37] font-bold">3</span>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-serif font-bold text-white mb-2 text-lg">Mandatory Activities</p>
+                    <ul className="space-y-2 text-white/70">
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Join at least 2 SOTR events.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Join at least 1 touring event.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Active participation in official events.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20">
+                  <p className="text-[#D4AF37] text-sm text-center italic">By continuing, you acknowledge that you have read and agreed to these requirements.</p>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <Button onClick={() => setCurrentStep("registration")} variant="outline" className="flex-1 border-white/20 text-white hover:bg-white/10 py-6">
+                  Back
+                </Button>
+                <Button
+                  onClick={() => setCurrentStep("inauguration")}
+                  className="flex-1 bg-[#D4AF37] hover:bg-[#B5952F] text-black py-6 text-lg font-bold shadow-lg"
+                >
+                  I Agree & Continue
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {currentStep === "inauguration" && (
+            <motion.div key="inauguration" {...fadeIn} className="space-y-8">
+              <h2 className={headingStyle}>Inauguration Journey</h2>
+
+              <div className="relative">
+                <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#D4AF37] via-white/20 to-transparent" />
+
+                <div className="space-y-8 relative">
+                  <div className="flex gap-6 items-center group">
+                    <div className="w-16 h-16 rounded-full bg-[#0f0f0f] border-2 border-[#D4AF37] flex items-center justify-center flex-shrink-0 z-10 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+                      <span className="text-xl font-bold text-[#D4AF37]">1</span>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-lg border border-white/10 flex-1 group-hover:border-[#D4AF37]/30 transition-colors">
+                      <h3 className="text-lg font-bold text-white">Application Review</h3>
+                      <p className="text-white/60 text-sm">Our team will review your submission within 3-5 business days.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-6 items-center group">
+                    <div className="w-16 h-16 rounded-full bg-[#0f0f0f] border-2 border-white/20 flex items-center justify-center flex-shrink-0 z-10 bg-[#0f0f0f]">
+                      <span className="text-xl font-bold text-white/40">2</span>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-lg border border-white/10 flex-1">
+                      <h3 className="text-lg font-bold text-white">Verification</h3>
+                      <p className="text-white/60 text-sm">We verify your vehicle details and personal information.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-6 items-center group">
+                    <div className="w-16 h-16 rounded-full bg-[#0f0f0f] border-2 border-white/20 flex items-center justify-center flex-shrink-0 z-10 bg-[#0f0f0f]">
+                      <span className="text-xl font-bold text-white/40">3</span>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-lg border border-white/10 flex-1">
+                      <h3 className="text-lg font-bold text-white">Welcome Event</h3>
+                      <p className="text-white/60 text-sm">Join us at the next gathering to meet the family.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-6 items-center group">
+                    <div className="w-16 h-16 rounded-full bg-[#0f0f0f] border-2 border-white/20 flex items-center justify-center flex-shrink-0 z-10 bg-[#0f0f0f]">
+                      <span className="text-xl font-bold text-white/40">4</span>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-lg border border-white/10 flex-1">
+                      <h3 className="text-lg font-bold text-white">Official Member</h3>
+                      <p className="text-white/60 text-sm">Receive your official ID and starter kit.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-4 pt-8">
+                <Button onClick={() => setCurrentStep("requirements")} variant="outline" className="flex-1 border-white/20 text-white hover:bg-white/10 py-6">
+                  Back
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="flex-1 bg-[#D4AF37] hover:bg-[#B5952F] text-black py-6 text-lg font-bold shadow-lg"
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center gap-2">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full"
+                      />
+                      Submitting...
+                    </span>
+                  ) : (
+                    "Submit Application"
+                  )}
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {currentStep === "member" && (
+            <motion.div key="member" {...fadeIn} className="text-center space-y-8 py-12">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                className="w-24 h-24 bg-[#D4AF37] rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(212,175,55,0.5)]"
               >
-                {isSubmitting ? "Submitting..." : "Submit Application"}
-              </Button>
-            </div>
-          </div>
-        )}
+                <Check className="w-12 h-12 text-black" />
+              </motion.div>
 
-        {currentStep === "member" && (
-          <div className="text-center space-y-6 py-8">
-            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-              <Check className="w-8 h-8 text-primary" />
-            </div>
-            <h2 className="text-3xl font-bold text-foreground">Application Submitted!</h2>
-            <p className="text-foreground/70 max-w-sm mx-auto">
-              Thank you for applying to Mercedes-Benz W205CI Club Indonesia. We will review your application and contact
-              you within 3-5 business days.
-            </p>
-            <Button
-              onClick={() => (window.location.href = "/")}
-              className="bg-primary hover:bg-primary/90 text-white px-8 py-3"
-            >
-              Return to Home
-            </Button>
-          </div>
-        )}
+              <div className="space-y-4">
+                <h2 className="text-4xl font-serif font-bold text-white">Application Received</h2>
+                <p className="text-white/70 max-w-md mx-auto text-lg leading-relaxed">
+                  Thank you for applying to the <span className="text-[#D4AF37] font-semibold">Mercedes-Benz W205CI Club Indonesia</span>.
+                </p>
+                <div className="p-4 bg-white/5 rounded-lg max-w-sm mx-auto border border-white/10">
+                  <p className="text-white/60 text-sm">We will contact you via email or WhatsApp within 3-5 business days regarding the next steps.</p>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => (window.location.href = "/")}
+                className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-full border border-white/20 backdrop-blur-sm transition-all hover:scale-105"
+              >
+                Return to Home
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </Card>
     </div>
   )

@@ -1,40 +1,10 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
+import pool from "@/lib/db"
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
-
-    const { data, error } = await supabase.from("cms_contact").select("*").limit(1)
-
-    if (error) {
-      return NextResponse.json({
-        id: "default",
-        title: "Get in Touch",
-        description: "Our friendly team would love to hear from you. Send us a message anytime.",
-        phone: "+62 XXX XXXX XXXX",
-        email: "info@mbw205ci.com",
-      })
-    }
-
-    const contactData = data && data.length > 0 ? data[0] : null
+    const { rows } = await pool.query("SELECT * FROM cms_contact LIMIT 1")
+    const contactData = rows[0]
 
     if (!contactData) {
       return NextResponse.json({
@@ -48,7 +18,7 @@ export async function GET() {
 
     return NextResponse.json(contactData)
   } catch (error) {
-    console.error("[v0] Contact API error:", error)
+    console.error("[mrc] Contact API error:", error)
     return NextResponse.json({
       id: "default",
       title: "Get in Touch",
@@ -62,52 +32,47 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
 
-    const { data: existingData, error: fetchError } = await supabase.from("cms_contact").select("id").limit(1)
+    // Check if exists
+    const { rows: existing } = await pool.query("SELECT id FROM cms_contact LIMIT 1")
 
     let result
-    if (!existingData || existingData.length === 0) {
-      // Insert if no record exists
-      const { data, error } = await supabase.from("cms_contact").insert([body]).select().limit(1)
-      if (error) {
-        return NextResponse.json({ error: "Failed to create contact config" }, { status: 500 })
-      }
-      result = data && data.length > 0 ? data[0] : null
-    } else {
-      // Update existing record
-      const { data, error } = await supabase
-        .from("cms_contact")
-        .update(body)
-        .eq("id", body.id || existingData[0].id)
-        .select()
-        .limit(1)
+    if (existing.length === 0) {
+      // Insert
+      const columns = Object.keys(body).join(", ")
+      const values = Object.values(body)
+      const placeholders = values.map((_, i) => `$${i + 1}`).join(", ")
 
-      if (error) {
-        return NextResponse.json({ error: "Failed to update contact config" }, { status: 500 })
-      }
-      result = data && data.length > 0 ? data[0] : null
+      const { rows } = await pool.query(`INSERT INTO cms_contact (${columns}) VALUES (${placeholders}) RETURNING *`, values)
+      result = rows[0]
+    } else {
+      // Update
+      const fields: string[] = []
+      const values: any[] = []
+      let paramIndex = 1
+
+      Object.keys(body).forEach(key => {
+        if (key !== 'id') {
+          fields.push(`${key} = $${paramIndex}`)
+          values.push(body[key])
+          paramIndex++
+        }
+      })
+
+      values.push(body.id || existing[0].id)
+
+      const query = `UPDATE cms_contact SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING *`
+      const { rows } = await pool.query(query, values)
+      result = rows[0]
+    }
+
+    if (!result) {
+      return NextResponse.json({ error: "Failed to update contact config" }, { status: 500 })
     }
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error("[v0] Contact PUT error:", error)
+    console.error("[mrc] Contact PUT error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

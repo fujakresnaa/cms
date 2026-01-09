@@ -1,5 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createClient } from "@/lib/supabase/server"
+import pool from "@/lib/db"
+import { writeFile } from "fs/promises"
+import { existsSync, mkdirSync } from "fs"
+import path from "path"
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,10 +27,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (!nomorTelephone?.trim()) errors.nomorTelephone = "Phone number is required"
-    else if (!/^(\+62|08)[0-9]{9,}$/.test(nomorTelephone.replace(/\s/g, ""))) {
-      errors.nomorTelephone = "Invalid Indonesian phone number"
-    }
-
     if (!nomorPolisi?.trim()) errors.nomorPolisi = "License plate is required"
     if (!chapterDomisili?.trim()) errors.chapterDomisili = "City is required"
     if (!tipeMobile?.trim()) errors.tipeMobile = "Car variant is required"
@@ -40,61 +39,74 @@ export async function POST(request: NextRequest) {
     let photoUrl: string | null = null
 
     if (fotoKendaraan) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+      if (!allowedTypes.includes(fotoKendaraan.type)) {
+        return NextResponse.json({ errors: { fotoKendaraan: "Invalid file type" } }, { status: 400 })
+      }
+
       try {
-        const supabase = await createClient()
         const fileBuffer = await fotoKendaraan.arrayBuffer()
-        const filename = `${Date.now()}-${fotoKendaraan.name.replace(/[^a-zA-Z0-9.-]/g, "")}`
-        const filepath = `member-photos/${filename}`
+        const buffer = Buffer.from(fileBuffer)
 
-        const { data, error: uploadError } = await supabase.storage
-          .from("member-uploads")
-          .upload(filepath, fileBuffer, {
-            contentType: fotoKendaraan.type,
-            upsert: false,
-          })
-
-        if (uploadError) {
-          console.error("[v0] Image upload error:", uploadError)
-          errors.fotoKendaraan = "Failed to upload image"
-          return NextResponse.json({ errors }, { status: 400 })
+        // Ensure uploads directory exists
+        const uploadsDir = path.join(process.cwd(), "public", "uploads")
+        if (!existsSync(uploadsDir)) {
+          mkdirSync(uploadsDir, { recursive: true })
         }
 
-        // Get public URL
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("member-uploads").getPublicUrl(filepath)
-        photoUrl = publicUrl
+        const filename = `${Date.now()}-${fotoKendaraan.name.replace(/[^a-zA-Z0-9.-]/g, "")}`
+        const filePath = path.join(uploadsDir, filename)
+        photoUrl = `/uploads/${filename}`
+
+        await writeFile(filePath, buffer)
       } catch (uploadError) {
-        console.error("[v0] Image upload error:", uploadError)
+        console.error("[mrc] Image upload error:", uploadError)
         errors.fotoKendaraan = "Failed to upload image"
-        return NextResponse.json({ errors }, { status: 400 })
+        return NextResponse.json({ errors }, { status: 500 })
       }
     }
 
-    const { createMember } = await import("@/lib/database")
-
-    const newMember = await createMember({
-      full_name: namaLengkap,
-      email: alamatEmail,
-      phone_number: nomorTelephone,
-      city: chapterDomisili,
-      car_variant: tipeMobile,
-      year_car: tahunKendaraan,
-      license_plate: nomorPolisi,
-      photo_url: photoUrl,
-      status: "pending",
-    })
+    // Insert into DB using pg
+    const { rows } = await pool.query(
+      `INSERT INTO members 
+      (full_name, email, phone_number, city, car_variant, year_car, license_plate, photo_url, status, created_at, updated_at) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) 
+      RETURNING *`,
+      [
+        namaLengkap,
+        alamatEmail,
+        nomorTelephone,
+        chapterDomisili,
+        tipeMobile,
+        tahunKendaraan,
+        nomorPolisi,
+        photoUrl,
+        "pending"
+      ]
+    )
 
     return NextResponse.json(
       {
         success: true,
         message: "Registration successful",
-        data: newMember,
+        data: rows[0],
       },
       { status: 201 },
     )
-  } catch (error) {
+  } catch (error: any) {
     console.error("Registration error:", error)
+
+    // Handle duplicate key error (Postgres code 23505)
+    if (error?.code === '23505') {
+      const field = error.detail?.includes("email") ? "Email" :
+        error.detail?.includes("license_plate") ? "License plate" : "Data"
+      return NextResponse.json(
+        { errors: { submit: `${field} already registered.` } },
+        { status: 409 },
+      )
+    }
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 },
@@ -104,9 +116,9 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const { getAllMembers } = await import("@/lib/database")
-    const members = await getAllMembers()
-    return NextResponse.json({ members }, { status: 200 })
+    // Use pg to fetch members
+    const { rows } = await pool.query("SELECT * FROM members ORDER BY created_at DESC")
+    return NextResponse.json({ members: rows }, { status: 200 })
   } catch (error) {
     console.error("Error fetching members:", error)
     return NextResponse.json({ error: "Failed to fetch members" }, { status: 500 })

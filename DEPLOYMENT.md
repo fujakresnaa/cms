@@ -1,114 +1,114 @@
-# MRC Application Deployment Guide
+# Deployment Guide for MRC Club Admin
+
+This guide covers deployment strategies for the MRC Club Admin application, focusing on Docker (recommended for production) and manual deployment.
 
 ## Prerequisites
 
-- Docker & Docker Compose installed
-- Supabase account with database configured
-- Vercel Blob storage token (for image uploads)
-- Node.js 18+ (for local development)
+- **Docker & Docker Compose** (for containerized deployment)
+- **Node.js 20+** (for manual/local deployment)
+- **PostgreSQL Database** (Containerized or External)
+- **Supabase Account** (for Authentication only)
 
-## Environment Setup
+---
 
-1. Copy environment template:
-\`\`\`bash
-cp .env.example .env.local
-\`\`\`
+## 1. Environment Configuration
 
-2. Fill in your credentials:
-\`\`\`
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-BLOB_READ_WRITE_TOKEN=your-blob-token
-\`\`\`
+Regardless of the deployment method, you must configure your environment variables.
 
-## Local Development
+1.  Create a `.env` file in the root directory (copy from `.env.example` if available).
+2.  Add the following required variables:
 
-\`\`\`bash
-# Install dependencies
-npm install
+```env
+# Database Connection (Required)
+# If using Docker, the host is 'db'. If local, it's usually 'localhost'.
+DATABASE_URL=postgresql://user:password@hostname:5432/cms_mercy
 
-# Run development server
-npm run dev
+# Node Environment
+NODE_ENV=production
+```
 
-# Open http://localhost:3000
-\`\`\`
+---
 
-## Database Setup
+## 2. Docker Deployment (Recommended)
 
-1. Connect to your Supabase database
-2. Run migration scripts in order:
-   - `scripts/001_initial_schema.sql` - Creates all tables
-   - `scripts/002_seed_initial_data.sql` - Seeds initial data
+This project is optimized for Docker with a multi-stage `Dockerfile` and `docker-compose.yml`.
 
-## Docker Deployment
+### Setup
+Ensure your `docker-compose.yml` and `Dockerfile` are present in the root.
 
-### Build Image
-\`\`\`bash
-docker build -t mrc-app:latest .
-\`\`\`
+### Running the Application
 
-### Run with Docker Compose
-\`\`\`bash
-docker-compose up -d
-\`\`\`
+1.  **Build and Start Containers**:
+    ```bash
+    docker-compose up -d --build
+    ```
+    This command will:
+    - Build the Next.js application (standalone mode).
+    - Start a PostgreSQL container (`db`).
+    - Start the Application container (`app`) on port 3000.
+    - Setup volume persistence for database (`postgres_data`) and file uploads (`uploads_data`).
 
-### View Logs
-\`\`\`bash
-docker-compose logs -f app
-\`\`\`
+2.  **Verify Running Services**:
+    ```bash
+    docker-compose ps
+    ```
 
-### Stop Container
-\`\`\`bash
-docker-compose down
-\`\`\`
+3.  **Run Database Migrations**:
+    After the containers are up, initialize the database schema.
+    ```bash
+    # Run the migration script inside the app container
+    docker-compose exec app npm run migrate
+    ```
 
-## Production Deployment
+### Managing Data Persistence
+- **Database**: Data is stored in the Docker volume `postgres_data`.
+- **File Uploads**: User uploads are stored in `public/uploads`, which is mapped to the Docker volume `uploads_data`. This ensures images persist even if you rebuild the container.
 
-### Vercel Deployment
-1. Push to GitHub
-2. Connect to Vercel
-3. Set environment variables
-4. Deploy automatically on push
+### Stopping the Application
+- Stop containers: `docker-compose down`
+- **WARNING**: To delete all data (database and uploads), run `docker-compose down -v`.
 
-### Self-Hosted (VPS/Server)
+---
 
-1. SSH into your server
-2. Clone the repository
-3. Set up environment variables
-4. Run with Docker Compose:
-\`\`\`bash
-docker-compose up -d
-\`\`\`
+## 3. Manual / VPS Deployment
 
-### Health Check
-The application includes a health check endpoint at `/api/health`. Monitor this to ensure the application is running.
+If you prefer running without Docker:
 
-## Monitoring
+1.  **Install Dependencies**:
+    ```bash
+    npm install
+    ```
 
-- Container logs: `docker-compose logs app`
-- CPU/Memory usage: `docker stats mrc-app`
-- Health status: `curl http://localhost:3000/api/health`
+2.  **Build the Project**:
+    ```bash
+    npm run build
+    ```
 
-## Troubleshooting
+3.  **Database Setup**:
+    - Ensure you have a running PostgreSQL instance.
+    - Update `DATABASE_URL` in your `.env` file.
+    - Run migrations:
+      ```bash
+      npm run migrate
+      ```
 
-### Image Upload Issues
-- Verify Vercel Blob token is set correctly
-- Check token permissions
+4.  **Start the Server**:
+    ```bash
+    npm start
+    ```
+    The app will be available at `http://localhost:3000`.
 
-### Database Connection Issues
-- Verify Supabase credentials
-- Check network connectivity
-- Ensure RLS policies are configured
+---
 
-### Performance Issues
-- Monitor container resource limits
-- Check database query performance
-- Review application logs
+## 4. Troubleshooting
 
-## Scaling
+### Issue: "Failed to connect to database"
+- **Docker**: Ensure the `DATABASE_URL` uses `db` as the hostname (e.g., `postgresql://fuja:password@db:5432/cms_mercy`).
+- **Local**: Ensure the hostname is `localhost` and the port matches your local Postgres instance.
 
-For production deployments requiring scaling:
-- Use container orchestration (Kubernetes)
-- Implement load balancer
-- Set up CDN for static assets
-- Configure database replication
+### Issue: "Uploads missing after restart"
+- Verify that your `docker-compose.yml` correctly mounts the `uploads_data` volume to `/app/public/uploads` in the `app` service, NOT the `db` service.
+
+### Issue: "Build fails"
+- Run `npm install` to ensure lockfiles are synced.
+- Check for TypeScript errors with `npm run type-check`.

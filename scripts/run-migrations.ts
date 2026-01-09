@@ -1,46 +1,54 @@
-import { createClient } from "@supabase/supabase-js"
+import { Pool } from "pg"
 import * as fs from "fs"
 import * as path from "path"
+import * as dotenv from "dotenv"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Load environment variables from .env file
+dotenv.config()
 
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing Supabase credentials")
+const databaseUrl = process.env.DATABASE_URL
+
+if (!databaseUrl) {
+  console.error("Missing DATABASE_URL")
   process.exit(1)
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey)
+const pool = new Pool({
+  connectionString: databaseUrl,
+})
 
 async function runMigrations() {
+  const client = await pool.connect()
   try {
     console.log("Starting database migrations...")
+    console.log("Reading schema from scripts/schema.sql...")
 
-    const scriptsDir = path.join(__dirname, ".")
-    const sqlFiles = fs
-      .readdirSync(scriptsDir)
-      .filter((f) => f.match(/^\d+_.*\.sql$/))
-      .sort()
-
-    for (const file of sqlFiles) {
-      console.log(`Running migration: ${file}`)
-      const sqlPath = path.join(scriptsDir, file)
-      const sql = fs.readFileSync(sqlPath, "utf-8")
-
-      const { error } = await supabase.rpc("exec_sql", { sql })
-
-      if (error) {
-        console.error(`Error running ${file}:`, error)
-        continue
-      }
-
-      console.log(`✓ Completed: ${file}`)
+    const schemaPath = path.join(process.cwd(), "scripts", "schema.sql")
+    if (!fs.existsSync(schemaPath)) {
+      console.error("schema.sql not found!")
+      process.exit(1)
     }
 
-    console.log("✓ All migrations completed successfully!")
+    const sql = fs.readFileSync(schemaPath, "utf-8")
+
+    console.log("Executing schema...")
+
+    // Split by statement if needed, or run as one block. 
+    // running as one block is fine for `schema.sql` usually if it doesn't have complex concurrent mixed transactions.
+
+    await client.query("BEGIN")
+    await client.query(sql)
+    await client.query("COMMIT")
+
+    console.log("✓ Schema applied successfully!")
+    console.log("✓ All migrations completed!")
   } catch (error) {
+    await client.query("ROLLBACK")
     console.error("Migration failed:", error)
     process.exit(1)
+  } finally {
+    client.release()
+    await pool.end()
   }
 }
 

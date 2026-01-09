@@ -1,16 +1,18 @@
 // MRC Health Check Script
 // Verifies all critical systems and integrations are working properly
 
-import { createClient } from "@/lib/supabase/server"
+import { Pool } from "pg"
+import dotenv from "dotenv"
+import path from "path"
 
-const MRC_VERSION = "1.0.0"
-const CHECKS = {
-  database: "Database Connection",
-  tables: "Database Tables",
-  rls: "Row Level Security",
-  cms: "CMS Content",
-  api: "API Endpoints",
-}
+// Load env vars
+dotenv.config({ path: path.join(process.cwd(), ".env") })
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+})
+
+const MRC_VERSION = "1.0.1"
 
 async function runHealthCheck() {
   console.log(`\n[mrc] Starting Health Check v${MRC_VERSION}...\n`)
@@ -24,10 +26,15 @@ async function runHealthCheck() {
   try {
     // 1. Database Connection
     console.log("✓ Testing Database Connection...")
-    const supabase = await createClient()
-    const { data: connectionTest } = await supabase.from("members").select("count").limit(1)
-    results.passed++
-    console.log("[mrc] Database connection: OK\n")
+    try {
+      await pool.query("SELECT NOW()")
+      results.passed++
+      console.log("[mrc] Database connection: OK\n")
+    } catch (e) {
+      console.error("[mrc] Database connection failed:", e)
+      results.failed++
+      process.exit(1)
+    }
 
     // 2. Check Tables Exist
     console.log("✓ Verifying Database Tables...")
@@ -46,47 +53,15 @@ async function runHealthCheck() {
     ]
 
     for (const table of tables) {
-      const { error } = await supabase.from(table).select("count").limit(1)
-      if (error) {
-        console.log(`[mrc] ⚠️  Table missing: ${table}`)
+      try {
+        const { rows } = await pool.query(`SELECT 1 FROM ${table} LIMIT 1`) // Simple check
+      } catch (e) {
+        console.log(`[mrc] ⚠️  Table missing or error: ${table}`)
         results.warnings++
       }
     }
     results.passed++
-    console.log("[mrc] Database tables: OK\n")
-
-    // 3. Check RLS Policies
-    console.log("✓ Checking Row Level Security...")
-    const { data: policiesData } = await supabase.from("members").select("id").limit(1)
-    if (policiesData !== null || policiesData !== undefined) {
-      results.passed++
-      console.log("[mrc] RLS policies: OK\n")
-    }
-
-    // 4. Check CMS Content
-    console.log("✓ Verifying CMS Content...")
-    const cmsData = await Promise.allSettled([
-      supabase.from("cms_about").select("id").limit(1),
-      supabase.from("cms_logo").select("id").limit(1),
-      supabase.from("cms_hero").select("id").limit(1),
-      supabase.from("cms_contact").select("id").limit(1),
-      supabase.from("cms_membership").select("id").limit(1),
-    ])
-
-    let cmsOk = 0
-    cmsData.forEach((result, index) => {
-      if (result.status === "fulfilled" && result.value.data) {
-        cmsOk++
-      }
-    })
-
-    if (cmsOk === 5) {
-      results.passed++
-      console.log("[mrc] CMS content: OK\n")
-    } else {
-      results.warnings++
-      console.log(`[mrc] ⚠️  CMS content partially loaded: ${cmsOk}/5\n`)
-    }
+    console.log("[mrc] Database tables verification completed\n")
 
     // 5. Summary
     console.log("\n[mrc] ========== HEALTH CHECK SUMMARY ==========")
@@ -96,9 +71,11 @@ async function runHealthCheck() {
     console.log(`[mrc] Status: ${results.failed === 0 ? "✓ HEALTHY" : "✗ ISSUES DETECTED"}`)
     console.log("[mrc] ==========================================\n")
 
+    await pool.end()
     process.exit(results.failed === 0 ? 0 : 1)
   } catch (error) {
     console.error("[mrc] Health check failed:", error)
+    await pool.end()
     process.exit(1)
   }
 }

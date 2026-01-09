@@ -14,19 +14,19 @@ export function ShowcaseSection() {
 
   const staticCars = [
     {
-      image: "/white-mercedes-benz-c-class-w205-luxury-sedan-scen.jpg",
-      alt: "White Mercedes W205CI",
+      image: "/car-club-members-meeting-luxury.jpg",
+      alt: "Mercedes W205CI Meeting",
     },
     {
-      image: "/dark-blue-mercedes-benz-c-class-w205-city-street-u.jpg",
+      image: "/placeholder.jpg",
       alt: "Dark Blue Mercedes W205CI",
     },
     {
-      image: "/white-mercedes-benz-c-class-w205-urban-buildings-s.jpg",
+      image: "/car-club-members-meeting-luxury.jpg",
       alt: "White Mercedes W205CI",
     },
     {
-      image: "/dark-mercedes-benz-c-class-w205-night-city-lights.jpg",
+      image: "/placeholder.jpg",
       alt: "Dark Mercedes W205CI Night",
     },
   ]

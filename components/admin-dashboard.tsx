@@ -23,7 +23,17 @@ import {
   Plus,
   Globe,
 } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
 import { ImagePreview } from "./image-preview"
+
+const fadeIn = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -20 },
+  transition: { duration: 0.3 }
+}
+
+const glassCard = "bg-white/80 dark:bg-black/40 backdrop-blur-md border border-white/20 shadow-xl"
 
 interface Member {
   id: string
@@ -526,16 +536,22 @@ export function AdminDashboard() {
     }
   }
 
-  const updateBenefit = async (benefitId: string, updates: Partial<CMSBenefit>) => {
+  const handleBenefitChange = (id: string, field: keyof CMSBenefit, value: any) => {
+    setBenefits(benefits.map((b) => (b.id === id ? { ...b, [field]: value } : b)))
+  }
+
+  const saveBenefit = async (benefitId: string) => {
+    const benefit = benefits.find((b) => b.id === benefitId)
+    if (!benefit) return
+
     setIsSaving(true)
     try {
       const response = await fetch("/api/cms/benefits", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: benefitId, ...updates }),
+        body: JSON.stringify(benefit),
       })
       if (response.ok) {
-        setBenefits(benefits.map((b) => (b.id === benefitId ? { ...b, ...updates } : b)))
         alert("Benefit updated successfully")
       } else {
         alert("Failed to update benefit")
@@ -588,16 +604,22 @@ export function AdminDashboard() {
     }
   }
 
-  const updateEvent = async (eventId: string, updates: Partial<Event>) => {
+  const handleEventChange = (id: string, field: keyof Event, value: any) => {
+    setEvents(events.map((e) => (e.id === id ? { ...e, [field]: value } : e)))
+  }
+
+  const saveEvent = async (eventId: string) => {
+    const event = events.find((e) => e.id === eventId)
+    if (!event) return
+
     setIsSaving(true)
     try {
       const response = await fetch("/api/cms/events", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: eventId, ...updates }),
+        body: JSON.stringify(event),
       })
       if (response.ok) {
-        setEvents(events.map((e) => (e.id === eventId ? { ...e, ...updates } : e)))
         alert("Event updated successfully")
       } else {
         alert("Failed to update event")
@@ -897,8 +919,9 @@ export function AdminDashboard() {
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <aside
-        className={`${sidebarOpen ? "w-64" : "w-20"} bg-secondary text-white transition-all duration-300 border-r border-white/10 flex flex-col`}
+        className={`${sidebarOpen ? "w-64" : "w-20"} bg-[#0f0f0f] text-white transition-all duration-300 border-r border-white/5 flex flex-col relative z-20 shadow-2xl`}
       >
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
         <div className="h-16 flex items-center justify-between px-4 border-b border-white/10">
           {sidebarOpen && <h1 className="text-xl font-bold">MBW Admin</h1>}
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white hover:bg-white/10 p-2 rounded">
@@ -919,9 +942,8 @@ export function AdminDashboard() {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                activeTab === item.id ? "bg-primary text-white" : "text-white/70 hover:bg-white/10"
-              }`}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeTab === item.id ? "bg-primary text-white" : "text-white/70 hover:bg-white/10"
+                }`}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
               {sidebarOpen && <span>{t(item.label as any)}</span>}
@@ -963,142 +985,11 @@ export function AdminDashboard() {
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
-              <h1 className="text-3xl font-bold text-foreground">{t("dashboardOverview")}</h1>
+              <motion.div {...fadeIn}>
+                <h1 className="text-3xl font-serif font-bold text-foreground mb-6">{t("dashboardOverview")}</h1>
 
-              <Card className="p-4 bg-white">
-                <div className="flex flex-col md:flex-row gap-4 items-end">
-                  <div className="flex-1">
-                    <label className="block text-sm font-semibold text-foreground mb-2">{t("startDate")}</label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => {
-                        setStartDate(e.target.value)
-                        fetchStats()
-                      }}
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-semibold text-foreground mb-2">{t("endDate")}</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => {
-                        setEndDate(e.target.value)
-                        fetchStats()
-                      }}
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                  {(startDate || endDate) && (
-                    <button
-                      onClick={() => {
-                        setStartDate("")
-                        setEndDate("")
-                        fetchStats()
-                      }}
-                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                    >
-                      {t("clearFilters")}
-                    </button>
-                  )}
-                </div>
-              </Card>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <Card className="p-6 bg-white hover:shadow-lg transition-shadow">
-                  <p className="text-foreground/60 text-sm mb-2">{t("totalMembers")}</p>
-                  <p className="text-4xl font-bold text-primary">{stats.totalMembers}</p>
-                </Card>
-                <Card className="p-6 bg-white hover:shadow-lg transition-shadow">
-                  <p className="text-foreground/60 text-sm mb-2">{t("pendingApprovals")}</p>
-                  <p className="text-4xl font-bold text-accent">{stats.pendingApprovals}</p>
-                </Card>
-                <Card className="p-6 bg-white hover:shadow-lg transition-shadow">
-                  <p className="text-foreground/60 text-sm mb-2">{t("approvedMembers")}</p>
-                  <p className="text-4xl font-bold text-green-600">{stats.approvedMembers}</p>
-                </Card>
-                <Card className="p-6 bg-white hover:shadow-lg transition-shadow">
-                  <p className="text-foreground/60 text-sm mb-2">{t("totalEvents")}</p>
-                  <p className="text-4xl font-bold text-blue-600">{stats.totalEvents}</p>
-                </Card>
-              </div>
-
-              {/* Recent Activity */}
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">{t("recentRegistrations")}</h2>
-                <div className="space-y-4">
-                  {members.slice(0, 5).map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-4 bg-foreground/5 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        {member.photo_url && (
-                          <div
-                            className="cursor-pointer hover:opacity-80 transition"
-                            onClick={() => setPreviewImage(member.photo_url || null)}
-                          >
-                            <ImagePreview src={member.photo_url || "/placeholder.svg"} alt={member.full_name} />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-semibold text-foreground">{member.full_name}</p>
-                          <p className="text-sm text-foreground/60">{member.email}</p>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          member.status === "pending"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : member.status === "approved"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                        }`}
-                      >
-                        {t(member.status as "pending" | "approved" | "rejected")}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </TabsContent>
-
-            {/* Members Tab */}
-            <TabsContent value="members" className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-foreground">{t("memberManagement")}</h1>
-                <Button onClick={exportToCSV} className="bg-primary hover:bg-primary/90 text-white">
-                  <Download className="w-4 h-4 mr-2" />
-                  {t("exportCSV")}
-                </Button>
-              </div>
-
-              {/* Search and Filter */}
-              <Card className="p-4 bg-white">
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col md:flex-row gap-4">
-                    <div className="flex-1 relative">
-                      <Search className="absolute left-3 top-3 w-5 h-5 text-foreground/40" />
-                      <input
-                        type="text"
-                        placeholder={t("searchPlaceholder")}
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <select
-                      value={filterStatus}
-                      onChange={(e) => setFilterStatus(e.target.value as any)}
-                      className="px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    >
-                      <option value="all">{t("allStatus")}</option>
-                      <option value="pending">{t("pending")}</option>
-                      <option value="approved">{t("approved")}</option>
-                      <option value="rejected">{t("rejected")}</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col md:flex-row gap-4">
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <div className="flex flex-col md:flex-row gap-4 items-end">
                     <div className="flex-1">
                       <label className="block text-sm font-semibold text-foreground mb-2">{t("startDate")}</label>
                       <input
@@ -1106,7 +997,7 @@ export function AdminDashboard() {
                         value={startDate}
                         onChange={(e) => {
                           setStartDate(e.target.value)
-                          fetchMembers()
+                          fetchStats()
                         }}
                         className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
                       />
@@ -1118,463 +1009,606 @@ export function AdminDashboard() {
                         value={endDate}
                         onChange={(e) => {
                           setEndDate(e.target.value)
-                          fetchMembers()
+                          fetchStats()
                         }}
                         className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
                       />
                     </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Members Table */}
-              <Card className="bg-white overflow-hidden">
-                {isLoading ? (
-                  <div className="p-12 text-center">
-                    <p className="text-foreground/60">Loading members...</p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-foreground/5 border-b border-border sticky top-0">
-                        <tr>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[80px]">
-                            {t("photo")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[120px]">
-                            {t("name")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[150px]">
-                            {t("email")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[110px]">
-                            {t("phone")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[120px]">
-                            {t("carVariant")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[80px]">
-                            {t("year")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[110px]">
-                            {t("licensePlate")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[100px]">
-                            {t("city")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[120px]">
-                            {t("registered")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[90px]">
-                            {t("status")}
-                          </th>
-                          <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[120px]">
-                            {t("actions")}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredMembers.length > 0 ? (
-                          filteredMembers.map((member) => (
-                            <tr key={member.id} className="border-b border-border hover:bg-foreground/5 transition">
-                              <td className="px-4 py-3">
-                                {member.photo_url ? (
-                                  <div
-                                    className="cursor-pointer hover:opacity-80 transition inline-block group relative"
-                                    onClick={() => setPreviewImage(member.photo_url || null)}
-                                    title="Click to view full image"
-                                  >
-                                    <ImagePreview src={member.photo_url || "/placeholder.svg"} alt={member.full_name} />
-                                    <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
-                                      <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium transition">
-                                        View
-                                      </span>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center text-xs text-gray-600 border border-gray-300">
-                                    No Photo
-                                  </div>
-                                )}
-                              </td>
-                              <td className="px-4 py-3 font-medium text-foreground">{member.full_name}</td>
-                              <td className="px-4 py-3 text-foreground/70 text-xs">{member.email}</td>
-                              <td className="px-4 py-3 text-foreground">{member.phone_number}</td>
-                              <td className="px-4 py-3 text-foreground text-sm">{member.car_variant}</td>
-                              <td className="px-4 py-3 text-foreground">{member.year_car}</td>
-                              <td className="px-4 py-3 text-foreground font-mono text-sm">{member.license_plate}</td>
-                              <td className="px-4 py-3 text-foreground text-sm">{member.city}</td>
-                              <td className="px-4 py-3 text-foreground/70 text-sm">
-                                {new Date(member.created_at).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                })}
-                              </td>
-                              <td className="px-4 py-3">
-                                <span
-                                  className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${
-                                    member.status === "pending"
-                                      ? "bg-yellow-100 text-yellow-700"
-                                      : member.status === "approved"
-                                        ? "bg-green-100 text-green-700"
-                                        : "bg-red-100 text-red-700"
-                                  }`}
-                                >
-                                  {member.status === "pending" && <Clock className="w-3 h-3" />}
-                                  {member.status === "approved" && <Check className="w-3 h-3" />}
-                                  {member.status === "rejected" && <XIcon className="w-3 h-3" />}
-                                  {t(member.status)}
-                                </span>
-                              </td>
-                              <td className="px-4 py-3">
-                                <div className="flex gap-2 flex-wrap">
-                                  {member.status === "pending" && (
-                                    <>
-                                      <button
-                                        onClick={() => approveMember(member.id)}
-                                        className="p-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
-                                        title="Approve"
-                                      >
-                                        <Check className="w-4 h-4" />
-                                      </button>
-                                      <button
-                                        onClick={() => rejectMember(member.id)}
-                                        className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
-                                        title="Reject"
-                                      >
-                                        <XIcon className="w-4 h-4" />
-                                      </button>
-                                    </>
-                                  )}
-                                  <button
-                                    onClick={() => deleteMember(member.id)}
-                                    className="p-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition"
-                                    title="Delete member"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={11} className="px-4 py-8 text-center text-foreground/60">
-                              No members found matching your filters
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </Card>
-
-              {filteredMembers.length > 0 && (
-                <div className="text-sm text-foreground/60 text-center">
-                  {t("showing")} {filteredMembers.length} {t("of")} {members.length}
-                </div>
-              )}
-            </TabsContent>
-
-            {/* Messages Tab */}
-            <TabsContent value="messages" className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-foreground">{t("contactMessages")}</h1>
-              </div>
-
-              <Card className="p-4 bg-white">
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-semibold text-foreground mb-2">{t("startDate")}</label>
-                    <input
-                      type="date"
-                      value={messageStartDate}
-                      onChange={(e) => setMessageStartDate(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-semibold text-foreground mb-2">{t("endDate")}</label>
-                    <input
-                      type="date"
-                      value={messageEndDate}
-                      onChange={(e) => setMessageEndDate(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                  {(messageStartDate || messageEndDate) && (
-                    <div className="flex items-end">
-                      <button
-                        onClick={() => {
-                          setMessageStartDate("")
-                          setMessageEndDate("")
-                        }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                      >
-                        {t("clearFilters")}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </Card>
-
-              <Card className="bg-white overflow-hidden">
-                {filteredMessages.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <MessageCircle className="w-12 h-12 text-foreground/40 mx-auto mb-4" />
-                    <p className="text-foreground/60">
-                      {contactMessages.length === 0 ? t("noMessages") : "No messages in selected date range"}
-                    </p>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-foreground/5 border-b border-border">
-                        <tr>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">{t("name")}</th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">{t("email")}</th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">{t("message")}</th>
-                          <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">{t("date")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredMessages.map((message) => (
-                          <tr key={message.id} className="border-b border-border hover:bg-foreground/5 transition">
-                            <td className="px-6 py-4 font-medium text-foreground">
-                              {message.first_name} {message.last_name}
-                            </td>
-                            <td className="px-6 py-4 text-foreground/70">{message.email}</td>
-                            <td className="px-6 py-4 text-foreground text-sm max-w-xs">
-                              <div className="truncate hover:text-clip" title={message.message}>
-                                {message.message}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-foreground/70 text-sm">
-                              {new Date(message.created_at).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </Card>
-
-              {filteredMessages.length > 0 && (
-                <div className="text-sm text-foreground/60 text-center">
-                  {t("showing")} {filteredMessages.length} {t("of")} {contactMessages.length}
-                </div>
-              )}
-            </TabsContent>
-
-            {/* Gallery Tab (NEW) */}
-            <TabsContent value="gallery" className="space-y-6">
-              <h1 className="text-3xl font-bold text-foreground">{t("imageGallery")}</h1>
-
-              <Card className="p-6 bg-white">
-                <div
-                  className="flex items-center justify-center h-48 md:h-64 border-2 border-dashed border-primary/30 rounded-lg bg-primary/5 hover:bg-primary/10 transition cursor-pointer"
-                  onDragOver={(e) => {
-                    e.preventDefault()
-                    e.currentTarget.classList.add("bg-primary/20")
-                  }}
-                  onDragLeave={(e) => {
-                    e.currentTarget.classList.remove("bg-primary/20")
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault()
-                    e.currentTarget.classList.remove("bg-primary/20")
-                    const files = e.dataTransfer.files
-                    if (files) handleGalleryUpload(files)
-                  }}
-                >
-                  <input
-                    type="file"
-                    id="galleryUpload"
-                    multiple
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files) handleGalleryUpload(e.target.files)
-                    }}
-                  />
-                  <label
-                    htmlFor="galleryUpload"
-                    className="cursor-pointer w-full h-full flex items-center justify-center"
-                  >
-                    <div className="text-center">
-                      <Plus className="w-12 h-12 text-primary/40 mx-auto mb-4" />
-                      <p className="text-foreground mb-2 font-medium">{t("dragDrop")}</p>
-                      <p className="text-sm text-foreground/60 mb-4">or click to select files (Max 5MB per image)</p>
-                      <Button className="bg-primary hover:bg-primary/90 text-white">
-                        <Plus className="w-4 h-4 mr-2" />
-                        {t("selectImages")}
-                      </Button>
-                    </div>
-                  </label>
-                </div>
-              </Card>
-
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">
-                  {t("existingImages")} ({gallery.length})
-                </h2>
-                {gallery.length === 0 ? (
-                  <div className="text-center py-12">
-                    <p className="text-foreground/60">No images in gallery yet. Upload some to get started!</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {gallery.map((item) => (
-                      <div key={item.id} className="group relative rounded-lg overflow-hidden bg-gray-100">
-                        <img
-                          src={item.image_url || "/placeholder.svg"}
-                          alt={item.title}
-                          className="w-full h-48 object-cover group-hover:opacity-75 transition"
-                        />
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex flex-col items-center justify-center opacity-0 group-hover:opacity-100">
-                          <button
-                            onClick={() => deleteGalleryImage(item.id)}
-                            className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition"
-                            title="Delete image"
-                          >
-                            <Trash2 className="w-5 h-5" />
-                          </button>
-                        </div>
-                        <div className="p-3 bg-white">
-                          <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
-                          <p className="text-xs text-foreground/60">{new Date(item.created_at).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </Card>
-            </TabsContent>
-
-            {/* Content Tab */}
-            <TabsContent value="content" className="space-y-6">
-              <h1 className="text-3xl font-bold text-foreground">Content Management</h1>
-
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">Dashboard Date Filter</h2>
-                <div className="flex flex-col md:flex-row gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-semibold text-foreground mb-2">{t("startDate")}</label>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => {
-                        setStartDate(e.target.value)
-                        fetchStats()
-                      }}
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-sm font-semibold text-foreground mb-2">{t("endDate")}</label>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => {
-                        setEndDate(e.target.value)
-                        fetchStats()
-                      }}
-                      className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
-                    />
-                  </div>
-                  {(startDate || endDate) && (
-                    <div className="flex items-end">
+                    {(startDate || endDate) && (
                       <button
                         onClick={() => {
                           setStartDate("")
                           setEndDate("")
                           fetchStats()
                         }}
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+                        className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
                       >
                         {t("clearFilters")}
                       </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                </Card>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-2">
+                  <Card className={`p-6 ${glassCard} hover:scale-[1.02] transition-transform duration-300 group`}>
+                    <p className="text-foreground/60 text-sm mb-2 uppercase tracking-wider">{t("totalMembers")}</p>
+                    <p className="text-4xl font-serif font-bold text-primary group-hover:text-primary/80 transition-colors">{stats.totalMembers}</p>
+                  </Card>
+                  <Card className={`p-6 ${glassCard} hover:scale-[1.02] transition-transform duration-300 group`}>
+                    <p className="text-foreground/60 text-sm mb-2 uppercase tracking-wider">{t("pendingApprovals")}</p>
+                    <p className="text-4xl font-serif font-bold text-accent group-hover:text-accent/80 transition-colors">{stats.pendingApprovals}</p>
+                  </Card>
+                  <Card className={`p-6 ${glassCard} hover:scale-[1.02] transition-transform duration-300 group`}>
+                    <p className="text-foreground/60 text-sm mb-2 uppercase tracking-wider">{t("approvedMembers")}</p>
+                    <p className="text-4xl font-serif font-bold text-emerald-600 group-hover:text-emerald-500 transition-colors">{stats.approvedMembers}</p>
+                  </Card>
+                  <Card className={`p-6 ${glassCard} hover:scale-[1.02] transition-transform duration-300 group`}>
+                    <p className="text-foreground/60 text-sm mb-2 uppercase tracking-wider">{t("totalEvents")}</p>
+                    <p className="text-4xl font-serif font-bold text-blue-600 group-hover:text-blue-500 transition-colors">{stats.totalEvents}</p>
+                  </Card>
                 </div>
-              </Card>
 
-              {/* Header Logo Section */}
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">Header Logo & Description</h2>
-                {logo &&
-                  logo.id && ( // Check for logo.id to ensure it's loaded
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Logo Text</label>
+                {/* Recent Activity */}
+                <Card className={`p-6 ${glassCard}`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">{t("recentRegistrations")}</h2>
+                  <div className="space-y-4">
+                    {members.slice(0, 5).map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-4 bg-foreground/5 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          {member.photo_url && (
+                            <div
+                              className="cursor-pointer hover:opacity-80 transition"
+                              onClick={() => setPreviewImage(member.photo_url || null)}
+                            >
+                              <ImagePreview src={member.photo_url || "/placeholder.svg"} alt={member.full_name} />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-semibold text-foreground">{member.full_name}</p>
+                            <p className="text-sm text-foreground/60">{member.email}</p>
+                          </div>
+                        </div>
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${member.status === "pending"
+                            ? "bg-yellow-100 text-yellow-700"
+                            : member.status === "approved"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                            }`}
+                        >
+                          {t(member.status as "pending" | "approved" | "rejected")}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </motion.div>
+            </TabsContent>
+
+            {/* Members Tab */}
+            <TabsContent value="members" className="space-y-6">
+              <motion.div {...fadeIn}>
+                <div className="flex items-center justify-between mb-6">
+                  <h1 className="text-3xl font-serif font-bold text-foreground">{t("memberManagement")}</h1>
+                  <Button onClick={exportToCSV} className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
+                    <Download className="w-4 h-4 mr-2" />
+                    {t("exportCSV")}
+                  </Button>
+                </div>
+
+                {/* Search and Filter */}
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1 relative">
+                        <Search className="absolute left-3 top-3 w-5 h-5 text-foreground/40" />
                         <input
                           type="text"
-                          value={logo.text}
-                          onChange={(e) => setLogo({ ...logo, text: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          placeholder={t("searchPlaceholder")}
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Logo Subtext</label>
-                        <input
-                          type="text"
-                          value={logo.subtext}
-                          onChange={(e) => setLogo({ ...logo, subtext: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Logo Image URL</label>
-                        <input
-                          type="url"
-                          value={logo.image_url || ""}
-                          onChange={(e) => setLogo({ ...logo, image_url: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          placeholder="https://..."
-                        />
-                      </div>
-                      {logo.image_url && <ImagePreview src={logo.image_url || "/placeholder.svg"} alt="Logo" />}
-                      <Button
-                        onClick={updateLogo}
-                        disabled={isSaving}
-                        className="bg-primary hover:bg-primary/90 text-white"
+                      <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value as any)}
+                        className="px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
                       >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Logo
-                      </Button>
+                        <option value="all">{t("allStatus")}</option>
+                        <option value="pending">{t("pending")}</option>
+                        <option value="approved">{t("approved")}</option>
+                        <option value="rejected">{t("rejected")}</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-semibold text-foreground mb-2">{t("startDate")}</label>
+                        <input
+                          type="date"
+                          value={startDate}
+                          onChange={(e) => {
+                            setStartDate(e.target.value)
+                            fetchMembers()
+                          }}
+                          className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm font-semibold text-foreground mb-2">{t("endDate")}</label>
+                        <input
+                          type="date"
+                          value={endDate}
+                          onChange={(e) => {
+                            setEndDate(e.target.value)
+                            fetchMembers()
+                          }}
+                          className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+
+                {/* Members Table */}
+                <Card className={`${glassCard} overflow-hidden`}>
+                  {
+                    isLoading ? (
+                      <div className="p-12 text-center" >
+                        <p className="text-foreground/60">Loading members...</p>
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-foreground/5 border-b border-border sticky top-0">
+                            <tr>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[80px]">
+                                {t("photo")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[120px]">
+                                {t("name")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[150px]">
+                                {t("email")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[110px]">
+                                {t("phone")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[120px]">
+                                {t("carVariant")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[80px]">
+                                {t("year")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[110px]">
+                                {t("licensePlate")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[100px]">
+                                {t("city")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[120px]">
+                                {t("registered")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[90px]">
+                                {t("status")}
+                              </th>
+                              <th className="px-4 py-3 text-left font-semibold text-foreground min-w-[120px]">
+                                {t("actions")}
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredMembers.length > 0 ? (
+                              filteredMembers.map((member) => (
+                                <tr key={member.id} className="border-b border-border hover:bg-foreground/5 transition">
+                                  <td className="px-4 py-3">
+                                    {member.photo_url ? (
+                                      <div
+                                        className="cursor-pointer hover:opacity-80 transition inline-block group relative"
+                                        onClick={() => setPreviewImage(member.photo_url || null)}
+                                        title="Click to view full image"
+                                      >
+                                        <ImagePreview src={member.photo_url || "/placeholder.svg"} alt={member.full_name} />
+                                        <div className="absolute inset-0 rounded-lg bg-black/0 group-hover:bg-black/20 transition flex items-center justify-center">
+                                          <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium transition">
+                                            View
+                                          </span>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="w-14 h-14 rounded-lg bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center text-xs text-white/60 border border-white/10">
+                                        No Photo
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-3 font-medium text-foreground">{member.full_name}</td>
+                                  <td className="px-4 py-3 text-foreground/70 text-xs">{member.email}</td>
+                                  <td className="px-4 py-3 text-foreground">{member.phone_number}</td>
+                                  <td className="px-4 py-3 text-foreground text-sm">{member.car_variant}</td>
+                                  <td className="px-4 py-3 text-foreground">{member.year_car}</td>
+                                  <td className="px-4 py-3 text-foreground font-mono text-sm">{member.license_plate}</td>
+                                  <td className="px-4 py-3 text-foreground text-sm">{member.city}</td>
+                                  <td className="px-4 py-3 text-foreground/70 text-sm">
+                                    {new Date(member.created_at).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    })}
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <span
+                                      className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1 ${member.status === "pending"
+                                        ? "bg-yellow-100 text-yellow-700"
+                                        : member.status === "approved"
+                                          ? "bg-green-100 text-green-700"
+                                          : "bg-red-100 text-red-700"
+                                        }`}
+                                    >
+                                      {member.status === "pending" && <Clock className="w-3 h-3" />}
+                                      {member.status === "approved" && <Check className="w-3 h-3" />}
+                                      {member.status === "rejected" && <XIcon className="w-3 h-3" />}
+                                      {t(member.status)}
+                                    </span>
+                                  </td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex gap-2 flex-wrap">
+                                      {member.status === "pending" && (
+                                        <>
+                                          <button
+                                            onClick={() => approveMember(member.id)}
+                                            className="p-2 bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
+                                            title="Approve"
+                                          >
+                                            <Check className="w-4 h-4" />
+                                          </button>
+                                          <button
+                                            onClick={() => rejectMember(member.id)}
+                                            className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+                                            title="Reject"
+                                          >
+                                            <XIcon className="w-4 h-4" />
+                                          </button>
+                                        </>
+                                      )}
+                                      <button
+                                        onClick={() => deleteMember(member.id)}
+                                        className="p-2 bg-white/10 text-white rounded hover:bg-white/20 transition"
+                                        title="Delete member"
+                                      >
+                                        <Trash2 className="w-4 h-4" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={11} className="px-4 py-8 text-center text-foreground/60">
+                                  No members found matching your filters
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                </Card >
+
+                {
+                  filteredMembers.length > 0 && (
+                    <div className="text-sm text-foreground/60 text-center">
+                      {t("showing")} {filteredMembers.length} {t("of")} {members.length}
+                    </div>
+                  )
+                }
+              </motion.div >
+            </TabsContent >
+
+            {/* Messages Tab */}
+            < TabsContent value="messages" className="space-y-6" >
+              <motion.div {...fadeIn}>
+                <div className="flex items-center justify-between mb-6">
+                  <h1 className="text-3xl font-serif font-bold text-foreground">{t("contactMessages")}</h1>
+                </div>
+
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-semibold text-foreground mb-2">{t("startDate")}</label>
+                      <input
+                        type="date"
+                        value={messageStartDate}
+                        onChange={(e) => setMessageStartDate(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-sm font-semibold text-foreground mb-2">{t("endDate")}</label>
+                      <input
+                        type="date"
+                        value={messageEndDate}
+                        onChange={(e) => setMessageEndDate(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                    {(messageStartDate || messageEndDate) && (
+                      <div className="flex items-end">
+                        <button
+                          onClick={() => {
+                            setMessageStartDate("")
+                            setMessageEndDate("")
+                          }}
+                          className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+                        >
+                          {t("clearFilters")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </Card>
+
+                <Card className={`${glassCard} overflow-hidden`}>
+                  {filteredMessages.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <MessageCircle className="w-12 h-12 text-foreground/40 mx-auto mb-4" />
+                      <p className="text-foreground/60">
+                        {contactMessages.length === 0 ? t("noMessages") : "No messages in selected date range"}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-foreground/5 border-b border-border">
+                          <tr>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">{t("name")}</th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">{t("email")}</th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">{t("message")}</th>
+                            <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">{t("date")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredMessages.map((message) => (
+                            <tr key={message.id} className="border-b border-border hover:bg-foreground/5 transition">
+                              <td className="px-6 py-4 font-medium text-foreground">
+                                {message.first_name} {message.last_name}
+                              </td>
+                              <td className="px-6 py-4 text-foreground/70">{message.email}</td>
+                              <td className="px-6 py-4 text-foreground text-sm max-w-xs">
+                                <div className="truncate hover:text-clip" title={message.message}>
+                                  {message.message}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 text-foreground/70 text-sm">
+                                {new Date(message.created_at).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   )}
-              </Card>
+                </Card>
 
-              {/* About Section */}
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">About Section</h2>
-                {about &&
-                  about.id && ( // Check for about.id to ensure it's loaded
+                {filteredMessages.length > 0 && (
+                  <div className="text-sm text-foreground/60 text-center">
+                    {t("showing")} {filteredMessages.length} {t("of")} {contactMessages.length}
+                  </div>
+                )}
+              </motion.div>
+            </TabsContent >
+
+            {/* Gallery Tab (NEW) */}
+            < TabsContent value="gallery" className="space-y-6" >
+              <motion.div {...fadeIn}>
+                <h1 className="text-3xl font-serif font-bold text-foreground mb-6">{t("imageGallery")}</h1>
+
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <div
+                    className="flex items-center justify-center h-48 md:h-64 border-2 border-dashed border-primary/30 rounded-lg bg-primary/5 hover:bg-primary/10 transition cursor-pointer"
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      e.currentTarget.classList.add("bg-primary/20")
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.classList.remove("bg-primary/20")
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      e.currentTarget.classList.remove("bg-primary/20")
+                      const files = e.dataTransfer.files
+                      if (files) handleGalleryUpload(files)
+                    }}
+                  >
+                    <input
+                      type="file"
+                      id="galleryUpload"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files) handleGalleryUpload(e.target.files)
+                      }}
+                    />
+                    <label
+                      htmlFor="galleryUpload"
+                      className="cursor-pointer w-full h-full flex items-center justify-center"
+                    >
+                      <div className="text-center">
+                        <Plus className="w-12 h-12 text-primary/40 mx-auto mb-4" />
+                        <p className="text-foreground mb-2 font-medium">{t("dragDrop")}</p>
+                        <p className="text-sm text-foreground/60 mb-4">or click to select files (Max 5MB per image)</p>
+                        <Button className="bg-primary hover:bg-primary/90 text-white">
+                          <Plus className="w-4 h-4 mr-2" />
+                          {t("selectImages")}
+                        </Button>
+                      </div>
+                    </label>
+                  </div>
+                </Card>
+
+                <Card className={`p-6 ${glassCard}`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">
+                    {t("existingImages")} ({gallery.length})
+                  </h2>
+                  {gallery.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-foreground/60">No images in gallery yet. Upload some to get started!</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {gallery.map((item) => (
+                        <div key={item.id} className="group relative rounded-lg overflow-hidden bg-white/5">
+                          <img
+                            src={item.image_url || "/placeholder.svg"}
+                            alt={item.title}
+                            className="w-full h-48 object-cover group-hover:opacity-75 transition"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition flex flex-col items-center justify-center opacity-0 group-hover:opacity-100">
+                            <button
+                              onClick={() => deleteGalleryImage(item.id)}
+                              className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition"
+                              title="Delete image"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </div>
+                          <div className="p-3 bg-white/80 backdrop-blur-sm">
+                            <p className="text-sm font-medium text-foreground truncate">{item.title}</p>
+                            <p className="text-xs text-foreground/60">{new Date(item.created_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </motion.div>
+            </TabsContent >
+
+            {/* Content Tab */}
+            <TabsContent value="content" className="space-y-6">
+              <motion.div {...fadeIn}>
+                <h1 className="text-3xl font-serif font-bold text-foreground mb-6">Content Management</h1>
+
+
+
+                {/* Header Logo Section */}
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">Header Logo & Description</h2>
+                  {logo &&
+                    logo.id && ( // Check for logo.id to ensure it's loaded
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Logo Text</label>
+                          <input
+                            type="text"
+                            value={logo.text}
+                            onChange={(e) => setLogo({ ...logo, text: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Logo Subtext</label>
+                          <input
+                            type="text"
+                            value={logo.subtext}
+                            onChange={(e) => setLogo({ ...logo, subtext: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Logo Image URL</label>
+                          <input
+                            type="url"
+                            value={logo.image_url || ""}
+                            onChange={(e) => setLogo({ ...logo, image_url: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            placeholder="https://..."
+                          />
+                        </div>
+                        {logo.image_url && <ImagePreview src={logo.image_url || "/placeholder.svg"} alt="Logo" />}
+                        <Button
+                          onClick={updateLogo}
+                          disabled={isSaving}
+                          className="bg-primary hover:bg-primary/90 text-white"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Logo
+                        </Button>
+                      </div>
+                    )}
+                </Card>
+
+                {/* About Section */}
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">About Section</h2>
+                  {about &&
+                    about.id && ( // Check for about.id to ensure it's loaded
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
+                          <input
+                            type="text"
+                            value={about.title}
+                            onChange={(e) => setAbout({ ...about, title: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
+                          <textarea
+                            value={about.description}
+                            onChange={(e) => setAbout({ ...about, description: e.target.value })}
+                            rows={4}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Button Text</label>
+                          <input
+                            type="text"
+                            value={about.button_text}
+                            onChange={(e) => setAbout({ ...about, button_text: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <Button
+                          onClick={updateAbout}
+                          disabled={isSaving}
+                          className="bg-primary hover:bg-primary/90 text-white"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    )}
+                </Card>
+
+                {/* Hero Section Management */}
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">Hero Section</h2>
+                  {hero && hero.id && (
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
+                        <label className="block text-sm font-semibold text-foreground mb-2">Hero Title</label>
                         <input
                           type="text"
-                          value={about.title}
-                          onChange={(e) => setAbout({ ...about, title: e.target.value })}
+                          value={hero.title}
+                          onChange={(e) => setHero({ ...hero, title: e.target.value })}
                           className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
+                        <label className="block text-sm font-semibold text-foreground mb-2">Hero Description</label>
                         <textarea
-                          value={about.description}
-                          onChange={(e) => setAbout({ ...about, description: e.target.value })}
+                          value={hero.description}
+                          onChange={(e) => setHero({ ...hero, description: e.target.value })}
                           rows={4}
                           className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                         />
@@ -1583,494 +1617,491 @@ export function AdminDashboard() {
                         <label className="block text-sm font-semibold text-foreground mb-2">Button Text</label>
                         <input
                           type="text"
-                          value={about.button_text}
-                          onChange={(e) => setAbout({ ...about, button_text: e.target.value })}
+                          value={hero.button_text}
+                          onChange={(e) => setHero({ ...hero, button_text: e.target.value })}
                           className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-foreground mb-2">
+                          Background Image URL (Optional)
+                        </label>
+                        <input
+                          type="url"
+                          value={hero.background_image_url || ""}
+                          onChange={(e) => setHero({ ...hero, background_image_url: e.target.value })}
+                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          placeholder="https://..."
+                        />
+                      </div>
+                      {hero.background_image_url && (
+                        <ImagePreview src={hero.background_image_url || "/placeholder.svg"} alt="Hero Background" />
+                      )}
                       <Button
-                        onClick={updateAbout}
+                        onClick={updateHero}
                         disabled={isSaving}
                         className="bg-primary hover:bg-primary/90 text-white"
                       >
                         <Save className="w-4 h-4 mr-2" />
-                        Save Changes
+                        Save Hero Section
                       </Button>
                     </div>
                   )}
-              </Card>
+                </Card>
 
-              {/* Hero Section Management */}
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">Hero Section</h2>
-                {hero && hero.id && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2">Hero Title</label>
-                      <input
-                        type="text"
-                        value={hero.title}
-                        onChange={(e) => setHero({ ...hero, title: e.target.value })}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2">Hero Description</label>
-                      <textarea
-                        value={hero.description}
-                        onChange={(e) => setHero({ ...hero, description: e.target.value })}
-                        rows={4}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2">Button Text</label>
-                      <input
-                        type="text"
-                        value={hero.button_text}
-                        onChange={(e) => setHero({ ...hero, button_text: e.target.value })}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2">
-                        Background Image URL (Optional)
-                      </label>
-                      <input
-                        type="url"
-                        value={hero.background_image_url || ""}
-                        onChange={(e) => setHero({ ...hero, background_image_url: e.target.value })}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        placeholder="https://..."
-                      />
-                    </div>
-                    {hero.background_image_url && (
-                      <ImagePreview src={hero.background_image_url || "/placeholder.svg"} alt="Hero Background" />
-                    )}
+                {/* Events Section */}
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-bold text-foreground">Events</h2>
                     <Button
-                      onClick={updateHero}
-                      disabled={isSaving}
+                      onClick={() => setShowNewEventForm(!showNewEventForm)}
                       className="bg-primary hover:bg-primary/90 text-white"
                     >
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Hero Section
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Event
                     </Button>
                   </div>
-                )}
-              </Card>
 
-              {/* Events Section */}
-              <Card className="p-6 bg-white">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-foreground">Events</h2>
-                  <Button
-                    onClick={() => setShowNewEventForm(!showNewEventForm)}
-                    className="bg-primary hover:bg-primary/90 text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Event
-                  </Button>
-                </div>
-
-                {showNewEventForm && (
-                  <div className="mb-6 p-4 bg-gray-50 rounded-lg space-y-4">
-                    <input
-                      type="text"
-                      placeholder="Event Title"
-                      value={newEvent.title}
-                      onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg"
-                    />
-                    <textarea
-                      placeholder="Event Description"
-                      value={newEvent.description}
-                      onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                      rows={3}
-                      className="w-full px-4 py-2 border border-border rounded-lg"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Icon (emoji or icon type)"
-                      value={newEvent.icon}
-                      onChange={(e) => setNewEvent({ ...newEvent, icon: e.target.value })}
-                      className="w-full px-4 py-2 border border-border rounded-lg"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={createEvent}
-                        disabled={isSaving}
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        Create
-                      </Button>
-                      <Button
-                        onClick={() => setShowNewEventForm(false)}
-                        className="bg-gray-400 hover:bg-gray-500 text-white"
-                      >
-                        Cancel
-                      </Button>
+                  {showNewEventForm && (
+                    <div className="mb-6 p-4 bg-white/5 rounded-lg space-y-4">
+                      <input
+                        type="text"
+                        placeholder="Event Title"
+                        value={newEvent.title}
+                        onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                        className="w-full px-4 py-2 border border-border rounded-lg"
+                      />
+                      <textarea
+                        placeholder="Event Description"
+                        value={newEvent.description}
+                        onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                        rows={3}
+                        className="w-full px-4 py-2 border border-border rounded-lg"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Icon (emoji or icon type)"
+                        value={newEvent.icon}
+                        onChange={(e) => setNewEvent({ ...newEvent, icon: e.target.value })}
+                        className="w-full px-4 py-2 border border-border rounded-lg"
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={createEvent}
+                          disabled={isSaving}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          Create
+                        </Button>
+                        <Button
+                          onClick={() => setShowNewEventForm(false)}
+                          className="bg-white/20 hover:bg-white/30 text-white"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                <div className="space-y-4">
-                  {events.map((event) => (
-                    <div key={event.id} className="border-b border-border pb-4">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="space-y-4">
+                    {events.map((event) => (
+                      <div key={event.id} className="border-b border-border pb-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
+                            <input
+                              type="text"
+                              value={event.title}
+                              onChange={(e) => handleEventChange(event.id, "title", e.target.value)}
+                              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-foreground mb-2">Icon</label>
+                            <div className="flex gap-2 items-center">
+                              <div className="w-10 h-10 flex-shrink-0 bg-white/5 rounded flex items-center justify-center border border-border overflow-hidden">
+                                {(event.icon?.startsWith('/') || event.icon?.startsWith('http')) ? (
+                                  <img
+                                    src={event.icon}
+                                    alt="Icon"
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <span className="text-2xl">{event.icon || "🎯"}</span>
+                                )}
+                              </div>
+                              <input
+                                type="text"
+                                value={event.icon}
+                                onChange={(e) => handleEventChange(event.id, "icon", e.target.value)}
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="Emoji or Image URL"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-2">
+                            <Button
+                              onClick={() => saveEvent(event.id)}
+                              disabled={isSaving}
+                              className="bg-primary hover:bg-primary/90 text-white flex-1"
+                            >
+                              <Save className="w-4 h-4 mr-2" />
+                              Save
+                            </Button>
+                            <button
+                              onClick={() => deleteEvent(event.id)}
+                              className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
+                              title="Delete Event"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
+                          <textarea
+                            value={event.description}
+                            onChange={(e) => handleEventChange(event.id, "description", e.target.value)}
+                            rows={3}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                {/* Membership Section */}
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">Membership Section</h2>
+                  {membership &&
+                    membership.id && ( // Check for membership.id to ensure it's loaded
+                      <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
                           <input
                             type="text"
-                            value={event.title}
-                            onChange={(e) => updateEvent(event.id, { title: e.target.value })}
+                            value={membership.title}
+                            onChange={(e) => setMembership({ ...membership, title: e.target.value })}
                             className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-foreground mb-2">Icon</label>
-                          <input
-                            type="text"
-                            value={event.icon}
-                            onChange={(e) => updateEvent(event.id, { icon: e.target.value })}
+                          <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
+                          <textarea
+                            value={membership.description}
+                            onChange={(e) => setMembership({ ...membership, description: e.target.value })}
+                            rows={4}
                             className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                           />
                         </div>
-                        <div className="flex items-end">
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Stats</label>
+                          {membership.stats.map((stat, idx) => (
+                            <div key={idx} className="grid grid-cols-2 gap-4 mb-2">
+                              <input
+                                type="text"
+                                value={stat.label}
+                                onChange={(e) => {
+                                  const newStats = [...membership.stats]
+                                  newStats[idx].label = e.target.value
+                                  setMembership({ ...membership, stats: newStats })
+                                }}
+                                placeholder="Label"
+                                className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              />
+                              <input
+                                type="text"
+                                value={stat.value}
+                                onChange={(e) => {
+                                  const newStats = [...membership.stats]
+                                  newStats[idx].value = e.target.value
+                                  setMembership({ ...membership, stats: newStats })
+                                }}
+                                placeholder="Value"
+                                className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                        <Button
+                          onClick={updateMembership}
+                          disabled={isSaving}
+                          className="bg-primary hover:bg-primary/90 text-white"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    )}
+                </Card>
+
+                {/* Contact Section */}
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">Contact Section</h2>
+                  {contact &&
+                    contact.id && ( // Check for contact.id to ensure it's loaded
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
+                          <input
+                            type="text"
+                            value={contact.title}
+                            onChange={(e) => setContact({ ...contact, title: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
+                          <textarea
+                            value={contact.description}
+                            onChange={(e) => setContact({ ...contact, description: e.target.value })}
+                            rows={4}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Phone</label>
+                          <input
+                            type="tel"
+                            value={contact.phone}
+                            onChange={(e) => setContact({ ...contact, phone: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Email</label>
+                          <input
+                            type="email"
+                            value={contact.email}
+                            onChange={(e) => setContact({ ...contact, email: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <Button
+                          onClick={updateContact}
+                          disabled={isSaving}
+                          className="bg-primary hover:bg-primary/90 text-white"
+                        >
+                          <Save className="w-4 h-4 mr-2" />
+                          Save Changes
+                        </Button>
+                      </div>
+                    )}
+                </Card>
+
+                {/* Benefits Section */}
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">Benefits</h2>
+                  <div className="space-y-6">
+                    {benefits.map((benefit) => (
+                      <div key={benefit.id} className="border-b border-border pb-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
+                            <input
+                              type="text"
+                              value={benefit.title}
+                              onChange={(e) => handleBenefitChange(benefit.id, "title", e.target.value)}
+                              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-foreground mb-2">Icon</label>
+                            <input
+                              type="text"
+                              value={benefit.icon_type}
+                              onChange={(e) => handleBenefitChange(benefit.id, "icon_type", e.target.value)}
+                              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
+                          <textarea
+                            value={benefit.description}
+                            onChange={(e) => handleBenefitChange(benefit.id, "description", e.target.value)}
+                            rows={3}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <Button
+                            onClick={() => saveBenefit(benefit.id)}
+                            disabled={isSaving}
+                            className="bg-primary hover:bg-primary/90 text-white"
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            Save Benefit
+                          </Button>
                           <button
-                            onClick={() => deleteEvent(event.id)}
-                            className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition w-full"
+                            onClick={() => deleteBenefit(benefit.id)}
+                            className="p-2 px-4 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
                           >
                             <Trash2 className="w-4 h-4 inline mr-2" />
-                            Delete Event
+                            Delete Benefit
                           </button>
                         </div>
                       </div>
-                      <div className="mt-4">
-                        <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
-                        <textarea
-                          value={event.description}
-                          onChange={(e) => updateEvent(event.id, { description: e.target.value })}
-                          rows={3}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-
-              {/* Membership Section */}
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">Membership Section</h2>
-                {membership &&
-                  membership.id && ( // Check for membership.id to ensure it's loaded
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
-                        <input
-                          type="text"
-                          value={membership.title}
-                          onChange={(e) => setMembership({ ...membership, title: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
-                        <textarea
-                          value={membership.description}
-                          onChange={(e) => setMembership({ ...membership, description: e.target.value })}
-                          rows={4}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Stats</label>
-                        {membership.stats.map((stat, idx) => (
-                          <div key={idx} className="grid grid-cols-2 gap-4 mb-2">
-                            <input
-                              type="text"
-                              value={stat.label}
-                              onChange={(e) => {
-                                const newStats = [...membership.stats]
-                                newStats[idx].label = e.target.value
-                                setMembership({ ...membership, stats: newStats })
-                              }}
-                              placeholder="Label"
-                              className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                            />
-                            <input
-                              type="text"
-                              value={stat.value}
-                              onChange={(e) => {
-                                const newStats = [...membership.stats]
-                                newStats[idx].value = e.target.value
-                                setMembership({ ...membership, stats: newStats })
-                              }}
-                              placeholder="Value"
-                              className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                            />
-                          </div>
-                        ))}
-                      </div>
-                      <Button
-                        onClick={updateMembership}
-                        disabled={isSaving}
-                        className="bg-primary hover:bg-primary/90 text-white"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </Button>
-                    </div>
-                  )}
-              </Card>
-
-              {/* Contact Section */}
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">Contact Section</h2>
-                {contact &&
-                  contact.id && ( // Check for contact.id to ensure it's loaded
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
-                        <input
-                          type="text"
-                          value={contact.title}
-                          onChange={(e) => setContact({ ...contact, title: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
-                        <textarea
-                          value={contact.description}
-                          onChange={(e) => setContact({ ...contact, description: e.target.value })}
-                          rows={4}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Phone</label>
-                        <input
-                          type="tel"
-                          value={contact.phone}
-                          onChange={(e) => setContact({ ...contact, phone: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Email</label>
-                        <input
-                          type="email"
-                          value={contact.email}
-                          onChange={(e) => setContact({ ...contact, email: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <Button
-                        onClick={updateContact}
-                        disabled={isSaving}
-                        className="bg-primary hover:bg-primary/90 text-white"
-                      >
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </Button>
-                    </div>
-                  )}
-              </Card>
-
-              {/* Benefits Section */}
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">Benefits</h2>
-                <div className="space-y-6">
-                  {benefits.map((benefit) => (
-                    <div key={benefit.id} className="border-b border-border pb-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
-                          <input
-                            type="text"
-                            value={benefit.title}
-                            onChange={(e) => updateBenefit(benefit.id, { title: e.target.value })}
-                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-semibold text-foreground mb-2">Icon</label>
-                          <input
-                            type="text"
-                            value={benefit.icon_type}
-                            onChange={(e) => updateBenefit(benefit.id, { icon_type: e.target.value })}
-                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          />
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
-                        <textarea
-                          value={benefit.description}
-                          onChange={(e) => updateBenefit(benefit.id, { description: e.target.value })}
-                          rows={3}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <div className="mt-4">
-                        <button
-                          onClick={() => deleteBenefit(benefit.id)}
-                          className="p-2 px-4 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
-                        >
-                          <Trash2 className="w-4 h-4 inline mr-2" />
-                          Delete Benefit
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">Footer Configuration</h2>
-                {footer && footer.id && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2">Company Name</label>
-                      <input
-                        type="text"
-                        value={footer.company_name}
-                        onChange={(e) => setFooter({ ...footer, company_name: e.target.value })}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
-                      <textarea
-                        value={footer.description}
-                        onChange={(e) => setFooter({ ...footer, description: e.target.value })}
-                        rows={4}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Address</label>
-                        <input
-                          type="text"
-                          value={footer.address}
-                          onChange={(e) => setFooter({ ...footer, address: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Email</label>
-                        <input
-                          type="email"
-                          value={footer.email}
-                          onChange={(e) => setFooter({ ...footer, email: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Phone</label>
-                        <input
-                          type="tel"
-                          value={footer.phone}
-                          onChange={(e) => setFooter({ ...footer, phone: e.target.value })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-semibold text-foreground mb-2">Copyright Year</label>
-                        <input
-                          type="number"
-                          value={footer.copyright_year}
-                          onChange={(e) => setFooter({ ...footer, copyright_year: Number.parseInt(e.target.value) })}
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-foreground mb-2">Copyright Text</label>
-                      <input
-                        type="text"
-                        value={footer.copyright_text}
-                        onChange={(e) => setFooter({ ...footer, copyright_text: e.target.value })}
-                        className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                    <Button
-                      onClick={updateFooter}
-                      disabled={isSaving}
-                      className="bg-primary hover:bg-primary/90 text-white"
-                    >
-                      <Save className="w-4 h-4 mr-2" />
-                      Save Footer
-                    </Button>
+                    ))}
                   </div>
-                )}
-              </Card>
+                </Card>
+
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">Footer Configuration</h2>
+                  {footer && footer.id && (
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-foreground mb-2">Company Name</label>
+                        <input
+                          type="text"
+                          value={footer.company_name}
+                          onChange={(e) => setFooter({ ...footer, company_name: e.target.value })}
+                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
+                        <textarea
+                          value={footer.description}
+                          onChange={(e) => setFooter({ ...footer, description: e.target.value })}
+                          rows={4}
+                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Address</label>
+                          <input
+                            type="text"
+                            value={footer.address}
+                            onChange={(e) => setFooter({ ...footer, address: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Email</label>
+                          <input
+                            type="email"
+                            value={footer.email}
+                            onChange={(e) => setFooter({ ...footer, email: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Phone</label>
+                          <input
+                            type="tel"
+                            value={footer.phone}
+                            onChange={(e) => setFooter({ ...footer, phone: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Copyright Year</label>
+                          <input
+                            type="number"
+                            value={footer.copyright_year}
+                            onChange={(e) => setFooter({ ...footer, copyright_year: Number.parseInt(e.target.value) })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-foreground mb-2">Copyright Text</label>
+                        <input
+                          type="text"
+                          value={footer.copyright_text}
+                          onChange={(e) => setFooter({ ...footer, copyright_text: e.target.value })}
+                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      </div>
+                      <Button
+                        onClick={updateFooter}
+                        disabled={isSaving}
+                        className="bg-primary hover:bg-primary/90 text-white"
+                      >
+                        <Save className="w-4 h-4 mr-2" />
+                        Save Footer
+                      </Button>
+                    </div>
+                  )}
+                </Card>
+              </motion.div>
             </TabsContent>
 
             {/* Settings Tab */}
             <TabsContent value="settings" className="space-y-6">
-              <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+              <motion.div {...fadeIn}>
+                <h1 className="text-3xl font-serif font-bold text-foreground mb-6">Settings</h1>
 
-              {/* Social Media Links */}
-              <Card className="p-6 bg-white">
-                <h2 className="text-xl font-bold text-foreground mb-4">Social Media Links</h2>
-                <div className="space-y-4">
-                  {socialMedia.map((social) => (
-                    <div key={social.id} className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="block text-sm font-semibold text-foreground mb-2 capitalize">
-                          {social.platform}
-                        </label>
-                        <input
-                          type="url"
-                          value={social.url}
-                          onChange={(e) => {
-                            const newUrl = e.target.value
-                            setSocialMedia(socialMedia.map((s) => (s.id === social.id ? { ...s, url: newUrl } : s)))
-                          }}
-                          onBlur={() => updateSocialMedia(social.id, social.url)}
-                          placeholder="https://..."
-                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                        />
+                {/* Social Media Links */}
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">Social Media Links</h2>
+                  <div className="space-y-4">
+                    {socialMedia.map((social) => (
+                      <div key={social.id} className="flex gap-4 items-end">
+                        <div className="flex-1">
+                          <label className="block text-sm font-semibold text-foreground mb-2 capitalize">
+                            {social.platform}
+                          </label>
+                          <input
+                            type="url"
+                            value={social.url}
+                            onChange={(e) => {
+                              const newUrl = e.target.value
+                              setSocialMedia(socialMedia.map((s) => (s.id === social.id ? { ...s, url: newUrl } : s)))
+                            }}
+                            placeholder="https://..."
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <Button
+                          onClick={() => updateSocialMedia(social.id, social.url)}
+                          disabled={isSaving}
+                          className="bg-primary hover:bg-primary/90 text-white"
+                        >
+                          <Save className="w-4 h-4" />
+                        </Button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
+                    ))}
+                  </div>
+                </Card>
+              </motion.div>
             </TabsContent>
           </Tabs>
-        </div>
+        </div >
 
-        {previewImage && (
-          <div
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={() => setPreviewImage(null)}
-          >
+        {
+          previewImage && (
             <div
-              className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-auto"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+              onClick={() => setPreviewImage(null)}
             >
-              <div className="sticky top-0 flex justify-between items-center p-4 border-b border-border bg-white">
-                <h3 className="text-lg font-semibold text-foreground">Photo Preview</h3>
-                <button onClick={() => setPreviewImage(null)} className="p-2 hover:bg-gray-100 rounded transition">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              <div className="p-4 flex justify-center">
-                <img
-                  src={previewImage || "/placeholder.svg"}
-                  alt="Preview"
-                  className="max-w-full h-auto rounded-lg shadow-lg"
-                />
+              <div
+                className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="sticky top-0 flex justify-between items-center p-4 border-b border-border bg-white">
+                  <h3 className="text-lg font-semibold text-foreground">Photo Preview</h3>
+                  <button onClick={() => setPreviewImage(null)} className="p-2 hover:bg-white/10 text-black hover:text-black rounded transition">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="p-4 flex justify-center">
+                  <img
+                    src={previewImage || "/placeholder.svg"}
+                    alt="Preview"
+                    className="max-w-full h-auto rounded-lg shadow-lg"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </main>
-    </div>
+          )
+        }
+      </main >
+    </div >
   )
 }

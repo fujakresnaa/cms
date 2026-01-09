@@ -1,85 +1,58 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
+import pool from "@/lib/db"
+import { cookies } from "next/headers"
 import { createHash, randomBytes } from "crypto"
 
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
 
-    console.log("[v0] Login attempt with email:", email)
+    console.log("[mrc] Login attempt with email:", email)
 
     if (!email || !password) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 })
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
+    const { rows: adminData } = await pool.query(
+      "SELECT * FROM admin_users WHERE email = $1 LIMIT 1",
+      [email]
     )
 
-    const { data: adminData, error: queryError } = await supabase
-      .from("admin_users")
-      .select("*")
-      .eq("email", email)
-      .limit(1)
-
-    if (queryError) {
-      console.error("[v0] Database query error:", queryError)
-      return NextResponse.json({ error: "Database error occurred" }, { status: 500 })
-    }
-
-    if (!adminData || adminData.length === 0) {
-      console.log("[v0] Admin not found for email:", email)
+    if (adminData.length === 0) {
+      console.log("[mrc] Admin not found for email:", email)
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
     const admin = adminData[0]
-    console.log("[v0] Admin found:", admin.email, "is_active:", admin.is_active)
+    // Check is_active if it exists in the schema. Previously used so keeping it.
+    // If schema differs, this might error, but assuming schema matches previous `supabase.from('admin_users')`
 
+    // Note: in previous code `admin.password_hash`.
     const passwordHash = createHash("sha256").update(password).digest("hex")
-    console.log("[v0] Password hash match:", admin.password_hash === passwordHash)
 
     if (admin.password_hash !== passwordHash) {
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
     if (!admin.is_active) {
-      console.log("[v0] Admin account is inactive")
+      console.log("[mrc] Admin account is inactive")
       return NextResponse.json({ error: "Admin account is inactive" }, { status: 403 })
     }
 
     const sessionToken = randomBytes(32).toString("hex")
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days
 
-    const { error: sessionError } = await supabase.from("admin_sessions").insert({
-      admin_id: admin.id,
-      session_token: sessionToken,
-      expires_at: expiresAt,
-    })
+    await pool.query(
+      "INSERT INTO admin_sessions (admin_id, session_token, expires_at) VALUES ($1, $2, $3)",
+      [admin.id, sessionToken, expiresAt]
+    )
 
-    if (sessionError) {
-      console.error("[v0] Session creation error:", sessionError)
-      return NextResponse.json({ error: "Failed to create session" }, { status: 500 })
-    }
+    console.log("[mrc] Session created successfully for admin:", admin.id)
 
-    console.log("[v0] Session created successfully for admin:", admin.id)
+    // Update last_login
+    await pool.query("UPDATE admin_users SET last_login = NOW() WHERE id = $1", [admin.id])
 
-    await supabase.from("admin_users").update({ last_login: new Date().toISOString() }).eq("id", admin.id)
-
+    const cookieStore = await cookies()
     cookieStore.set("admin_session", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -96,7 +69,7 @@ export async function POST(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error("[v0] Login error:", error)
+    console.error("[mrc] Login error:", error)
     return NextResponse.json({ error: "Login failed" }, { status: 500 })
   }
 }

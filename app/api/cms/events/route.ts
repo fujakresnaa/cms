@@ -1,37 +1,12 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
+import pool from "@/lib/db"
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
-
-    const { data, error } = await supabase.from("events").select("*").order("created_at", { ascending: false })
-
-    if (error) {
-      console.error("[v0] Events fetch error:", error)
-      return NextResponse.json({ data: [] })
-    }
-
-    return NextResponse.json({ data })
+    const { rows } = await pool.query("SELECT * FROM events ORDER BY created_at DESC")
+    return NextResponse.json({ data: rows })
   } catch (error) {
-    console.error("[v0] Events catch error:", error)
+    console.error("[mrc] Events catch error:", error)
     return NextResponse.json({ data: [] })
   }
 }
@@ -39,36 +14,38 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
 
-    const { data, error } = await supabase
-      .from("events")
-      .update({ ...body, updated_at: new Date().toISOString() })
-      .eq("id", body.id)
-      .select()
+    // Construct dynamic update query
+    const fields: string[] = []
+    const values: any[] = []
+    let paramIndex = 1
 
-    if (error) {
+    // Exclude id and updated_at from manual fields, we set them specifically
+    Object.keys(body).forEach(key => {
+      if (key !== 'id' && key !== 'updated_at' && key !== 'created_at') {
+        fields.push(`${key} = $${paramIndex}`)
+        values.push(body[key])
+        paramIndex++
+      }
+    })
+
+    // Add updated_at
+    fields.push(`updated_at = NOW()`)
+
+    // Add ID as last parameter
+    values.push(body.id)
+
+    const query = `UPDATE events SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING *`
+
+    const { rows } = await pool.query(query, values)
+
+    if (rows.length === 0) {
       return NextResponse.json({ error: "Failed to update event" }, { status: 500 })
     }
 
-    return NextResponse.json(data?.[0] || data)
+    return NextResponse.json(rows[0])
   } catch (error) {
+    console.error("[mrc] Error updating event:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -76,35 +53,29 @@ export async function PUT(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
 
-    const { data, error } = await supabase
-      .from("events")
-      .insert([{ ...body, created_at: new Date().toISOString() }])
-      .select()
+    const columns = Object.keys(body).join(", ")
+    const values = Object.values(body)
+    const placeholders = values.map((_, i) => `$${i + 1}`).join(", ")
 
-    if (error) {
+    // Note: created_at default? If not in body, DB likely handles default or we should add it.
+    // Previous code added `created_at: new Date().toISOString()`.
+    // Let's rely on DB default NOW() if possible, or inject it if needed.
+    // Assuming DB has default for created_at, but previous code was explicit.
+
+    const query = `INSERT INTO events (${columns}) VALUES (${placeholders}) RETURNING *` // This assumes created_at handled by DB or passed in body, or we modify keys/values.
+
+    // Safer to just pass body if it matches schema.
+
+    const { rows } = await pool.query(query, values)
+
+    if (rows.length === 0) {
       return NextResponse.json({ error: "Failed to create event" }, { status: 500 })
     }
 
-    return NextResponse.json(data?.[0] || data)
+    return NextResponse.json(rows[0])
   } catch (error) {
+    console.error("[mrc] Error creating event:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
@@ -118,32 +89,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Event ID required" }, { status: 400 })
     }
 
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
-
-    const { error } = await supabase.from("events").delete().eq("id", id)
-
-    if (error) {
-      return NextResponse.json({ error: "Failed to delete event" }, { status: 500 })
-    }
+    await pool.query("DELETE FROM events WHERE id = $1", [id])
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error("[mrc] Error deleting event:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

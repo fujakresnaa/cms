@@ -1,31 +1,11 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
+import pool from "@/lib/db"
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
+    const { rows } = await pool.query("SELECT * FROM cms_social_media ORDER BY platform ASC")
 
-    const { data, error } = await supabase.from("cms_social_media").select("*").order("platform", { ascending: true })
-
-    if (error) {
-      console.error("[v0] Social media error:", error)
+    if (rows.length === 0) {
       // Return default social media data
       return NextResponse.json({
         data: [
@@ -37,9 +17,9 @@ export async function GET() {
       })
     }
 
-    return NextResponse.json({ data: data || [] })
+    return NextResponse.json({ data: rows })
   } catch (error) {
-    console.error("[v0] Social media catch error:", error)
+    console.error("[mrc] Social media catch error:", error)
     return NextResponse.json({
       data: [
         { id: "1", platform: "whatsapp", url: "#", icon_type: "whatsapp" },
@@ -54,31 +34,17 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const cookieStore = cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
+
+    const { rows } = await pool.query(
+      "UPDATE cms_social_media SET url = $1, icon_type = $2, platform = $3 WHERE id = $4 RETURNING *",
+      [body.url, body.icon_type, body.platform, body.id]
     )
 
-    const { data, error } = await supabase.from("cms_social_media").update(body).eq("id", body.id).select().single()
-
-    if (error) {
+    if (rows.length === 0) {
       return NextResponse.json({ error: "Failed to update" }, { status: 500 })
     }
 
-    return NextResponse.json(data)
+    return NextResponse.json(rows[0])
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

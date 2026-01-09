@@ -1,32 +1,12 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
+import pool from "@/lib/db"
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
+    const { rows } = await pool.query("SELECT * FROM cms_about LIMIT 1")
+    const data = rows[0]
 
-    const { data, error } = await supabase.from("cms_about").select("*").single()
-
-    if (error) {
-      console.error("[v0] CMS about error:", error)
-      // Return empty default data instead of error
+    if (!data) {
       return NextResponse.json({
         id: "default",
         title: "About Us",
@@ -37,7 +17,7 @@ export async function GET() {
 
     return NextResponse.json(data)
   } catch (error) {
-    console.error("[v0] CMS about catch error:", error)
+    console.error("[mrc] CMS about catch error:", error)
     return NextResponse.json({
       id: "default",
       title: "About Us",
@@ -50,31 +30,30 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
 
-    const { data, error } = await supabase.from("cms_about").update(body).eq("id", body.id).select()
+    // Assuming body properties match DB columns
+    const fields: string[] = []
+    const values: any[] = []
+    let paramIndex = 1
 
-    if (error) {
+    Object.keys(body).forEach(key => {
+      if (key !== 'id') {
+        fields.push(`${key} = $${paramIndex}`)
+        values.push(body[key])
+        paramIndex++
+      }
+    })
+    values.push(body.id)
+
+    const query = `UPDATE cms_about SET ${fields.join(", ")} WHERE id = $${paramIndex} RETURNING *`
+
+    const { rows } = await pool.query(query, values)
+
+    if (rows.length === 0) {
       return NextResponse.json({ error: "Failed to update" }, { status: 500 })
     }
 
-    return NextResponse.json(data?.[0] || data)
+    return NextResponse.json(rows[0])
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

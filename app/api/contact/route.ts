@@ -1,24 +1,13 @@
-import { createClient } from "@supabase/supabase-js"
 import { type NextRequest, NextResponse } from "next/server"
+import pool from "@/lib/db"
 
 export async function GET() {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const { rows } = await pool.query(
+      "SELECT * FROM contact_messages ORDER BY created_at DESC"
     )
 
-    const { data, error } = await supabase
-      .from("contact_messages")
-      .select("*")
-      .order("created_at", { ascending: false })
-
-    if (error) {
-      console.error("[Contact API] Error fetching messages:", error)
-      return NextResponse.json({ data: [] }, { status: 200 })
-    }
-
-    return NextResponse.json({ data: data || [] }, { status: 200 })
+    return NextResponse.json({ data: rows }, { status: 200 })
   } catch (error) {
     console.error("[Contact API] Contact messages error:", error)
     return NextResponse.json({ data: [] }, { status: 200 })
@@ -27,12 +16,8 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("[Contact API] POST request started")
-    
     const body = await request.json()
     const { first_name, last_name, email, message } = body
-
-    console.log("[Contact API] Contact form submission:", { first_name, last_name, email, messageLength: message?.length })
 
     // Validation
     const errors: Record<string, string> = {}
@@ -46,70 +31,22 @@ export async function POST(request: NextRequest) {
     if (!message?.trim()) errors.message = "Message is required"
 
     if (Object.keys(errors).length > 0) {
-      console.log("[Contact API] Validation errors:", errors)
       return NextResponse.json({ errors }, { status: 400 })
     }
 
-    // Check environment variables
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    
-    console.log("[Contact API] Environment check:", {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseKey,
-      url: supabaseUrl
-    })
-    
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("[Contact API] Missing Supabase environment variables")
-      return NextResponse.json(
-        { error: "Server configuration error. Please try again later." },
-        { status: 500 }
-      )
-    }
-
-    // Create Supabase client
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    console.log("[Contact API] Attempting to insert data...")
-
-    const insertData = {
-      first_name: first_name.trim(),
-      last_name: last_name.trim(),
-      email: email.trim().toLowerCase(),
-      message: message.trim(),
-    }
-
-    console.log("[Contact API] Insert data:", insertData)
-
-    const { data, error } = await supabase
-      .from("contact_messages")
-      .insert([insertData])
-      .select()
-
-    console.log("[Contact API] Supabase response:", { data, error })
-
-    if (error) {
-      console.error("[Contact API] Database error:", {
-        message: error.message,
-        details: error.details,
-        hint: error.hint,
-        code: error.code
-      })
-      
-      return NextResponse.json(
-        { error: `Database error: ${error.message}` },
-        { status: 500 }
-      )
-    }
-
-    console.log("[Contact API] Message saved successfully:", data)
+    // Insert into DB using pg
+    const { rows } = await pool.query(
+      `INSERT INTO contact_messages (first_name, last_name, email, message) 
+       VALUES ($1, $2, $3, $4) 
+       RETURNING *`,
+      [first_name.trim(), last_name.trim(), email.trim().toLowerCase(), message.trim()]
+    )
 
     return NextResponse.json(
       {
         success: true,
         message: "Message submitted successfully! We'll get back to you soon.",
-        data,
+        data: rows[0],
       },
       { status: 201 },
     )

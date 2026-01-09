@@ -1,31 +1,12 @@
-import { createServerClient } from "@supabase/ssr"
-import { cookies } from "next/headers"
 import { type NextRequest, NextResponse } from "next/server"
+import pool from "@/lib/db"
 
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
-    )
+    const { rows } = await pool.query("SELECT * FROM cms_logo LIMIT 1")
+    const data = rows[0]
 
-    const { data, error } = await supabase.from("cms_logo").select("*").single()
-
-    if (error) {
-      console.error("[v0] Logo fetch error:", error)
+    if (!data) {
       return NextResponse.json({
         id: "default",
         text: "MBW205 Indonesia",
@@ -36,12 +17,12 @@ export async function GET() {
 
     return NextResponse.json({
       id: data.id,
-      text: data.logo_text,
-      subtext: data.logo_subtext,
-      image_url: data.logo_image_url,
+      text: data.text,
+      subtext: data.subtext,
+      image_url: data.image_url,
     })
   } catch (error) {
-    console.error("[v0] Logo catch error:", error)
+    console.error("[mrc] Logo catch error:", error)
     return NextResponse.json({
       id: "default",
       text: "MBW205 Indonesia",
@@ -54,48 +35,35 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
-    const cookieStore = await cookies()
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-            } catch {}
-          },
-        },
-      },
+
+    // Using COALESCE to allow partial updates (e.g. only updating image_url)
+    // and correcting column names to match schema (text, subtext, image_url)
+    const { rows } = await pool.query(
+      `UPDATE cms_logo 
+       SET text = COALESCE($1, text), 
+           subtext = COALESCE($2, subtext), 
+           image_url = COALESCE($3, image_url) 
+       WHERE id = $4 
+       RETURNING *`,
+      [body.text, body.subtext, body.image_url, body.id]
     )
 
-    const { data, error } = await supabase
-      .from("cms_logo")
-      .update({
-        logo_text: body.text,
-        logo_subtext: body.subtext,
-        logo_image_url: body.image_url,
-      })
-      .eq("id", body.id)
-      .select()
-      .single()
-
-    if (error) {
-      console.error("[v0] Logo update error:", error)
-      return NextResponse.json({ error: "Failed to update" }, { status: 500 })
+    if (rows.length === 0) {
+      // If no ID matches, maybe we haven't initialized? 
+      // Or the ID provided is wrong.
+      return NextResponse.json({ error: "Failed to update or ID not found" }, { status: 404 })
     }
+
+    const data = rows[0]
 
     return NextResponse.json({
       id: data.id,
-      text: data.logo_text,
-      subtext: data.logo_subtext,
-      image_url: data.logo_image_url,
+      text: data.text,
+      subtext: data.subtext,
+      image_url: data.image_url,
     })
   } catch (error) {
-    console.error("[v0] Logo put catch error:", error)
+    console.error("[mrc] Logo put catch error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

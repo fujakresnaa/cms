@@ -10,11 +10,16 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - DATABASE_URL=postgresql://fuja:password@db:5432/cms_mercy
       - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     restart: unless-stopped
+    depends_on:
+      - db
     networks:
       - mrc-network
+    volumes:
+      - uploads_data:/app/public/uploads
     deploy:
       resources:
         limits:
@@ -29,12 +34,28 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
+  db:
+    image: postgres:15-alpine
+    container_name: mrc-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=fuja
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=cms_mercy
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
 networks:
   mrc-network:
     driver: bridge
+
+volumes:
+  postgres_data:
+  uploads_data:
