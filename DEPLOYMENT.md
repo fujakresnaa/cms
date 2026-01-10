@@ -54,10 +54,14 @@ Ensure your `docker-compose.yml` and `Dockerfile` are present in the root.
     ```
 
 3.  **Run Database Migrations**:
-    After the containers are up, initialize the database schema.
+    Since you might not have shell access, use the migration endpoint:
+    ```bash
+    curl "https://your-domain.com/api/migrate?secret=your-secure-migration-secret"
+    ```
+    Or via Dokploy's "Shell" tab if available:
     ```bash
     # Run the migration script inside the app container
-    docker-compose exec app npm run migrate
+    docker exec -it mrc-app npm run migrate
     ```
 
 ### Managing Data Persistence
