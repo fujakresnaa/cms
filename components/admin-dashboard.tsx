@@ -866,9 +866,24 @@ export function AdminDashboard() {
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
+
+        // Read file as ArrayBuffer to ensure we have the binary data
+        const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as ArrayBuffer)
+          reader.onerror = () => reject(new Error('Failed to read file'))
+          reader.readAsArrayBuffer(file)
+        })
+
+        // Create a new Blob from the ArrayBuffer with the correct type
+        const blob = new Blob([arrayBuffer], { type: file.type })
+
+        // Create FormData with the blob
         const formData = new FormData()
-        formData.append("file", file)
+        formData.append("file", blob, file.name)
         formData.append("title", file.name.replace(/\.[^/.]+$/, ""))
+
+        console.log(`[Admin] Uploading ${file.name}, size: ${blob.size} bytes`)
 
         const response = await fetch("/api/cms/gallery/upload", {
           method: "POST",
@@ -877,9 +892,11 @@ export function AdminDashboard() {
 
         if (response.ok) {
           const newImage = await response.json()
-          setGallery([newImage, ...gallery])
+          setGallery((prev) => [newImage, ...prev])
         } else {
-          console.error(`[Admin] Failed to upload ${file.name}`)
+          const errorData = await response.json().catch(() => ({}))
+          console.error(`[Admin] Failed to upload ${file.name}:`, errorData)
+          alert(`Failed to upload ${file.name}: ${errorData.error || 'Unknown error'}`)
         }
       }
       alert(`Successfully uploaded ${files.length} image(s)`)
