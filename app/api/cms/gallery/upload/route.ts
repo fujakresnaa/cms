@@ -52,6 +52,14 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
 
+    // Log file info for debugging
+    console.log(`[mrc] Uploading: ${file.name}, Size: ${buffer.length} bytes, Type: ${file.type}`)
+
+    // Validate file has content
+    if (buffer.length === 0) {
+      return NextResponse.json({ error: "File is empty" }, { status: 400 })
+    }
+
     // Ensure uploads directory exists
     const uploadsDir = path.join(process.cwd(), "public", "uploads")
     if (!existsSync(uploadsDir)) {
@@ -66,6 +74,7 @@ export async function POST(request: NextRequest) {
 
     // Write file to disk
     await writeFile(filePath, buffer)
+    console.log(`[mrc] File written to: ${filePath}`)
 
     // Database Operation
     // Get next sort order

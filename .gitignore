@@ -22,3 +22,10 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# git
+.env
+.env.local
+.env.production
+.env.example
+
