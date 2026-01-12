@@ -49,6 +49,14 @@ export async function POST(request: NextRequest) {
         const fileBuffer = await fotoKendaraan.arrayBuffer()
         const buffer = Buffer.from(fileBuffer)
 
+        // Log file info for debugging
+        console.log(`[mrc] Registration upload: ${fotoKendaraan.name}, Size: ${buffer.length} bytes, Type: ${fotoKendaraan.type}`)
+
+        // Validate file has content
+        if (buffer.length === 0) {
+          return NextResponse.json({ errors: { fotoKendaraan: "File is empty" } }, { status: 400 })
+        }
+
         // Ensure uploads directory exists
         const uploadsDir = path.join(process.cwd(), "public", "uploads")
         if (!existsSync(uploadsDir)) {
@@ -60,6 +68,7 @@ export async function POST(request: NextRequest) {
         photoUrl = `/uploads/${filename}`
 
         await writeFile(filePath, buffer)
+        console.log(`[mrc] Registration file written to: ${filePath}`)
       } catch (uploadError) {
         console.error("[mrc] Image upload error:", uploadError)
         errors.fotoKendaraan = "Failed to upload image"
