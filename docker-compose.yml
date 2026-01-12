@@ -37,6 +37,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+  networks:
+    - mrc-network
 
   db:
     image: postgres:15-alpine
@@ -49,6 +51,8 @@ services:
       - POSTGRES_DB=cms_mercy
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mrc-network
 
 networks:
   mrc-network:
