@@ -61,8 +61,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Ensure uploads directory exists
-    const uploadsDir = path.join(process.cwd(), "public", "uploads")
+    const cwd = process.cwd()
+    const uploadsDir = path.join(cwd, "public", "uploads")
+    console.log(`[mrc-upload] CWD: ${cwd}`)
+    console.log(`[mrc-upload] Uploads Dir: ${uploadsDir}`)
+
     if (!existsSync(uploadsDir)) {
+      console.log(`[mrc-upload] Creating uploads directory...`)
       mkdirSync(uploadsDir, { recursive: true })
     }
 
@@ -74,7 +79,8 @@ export async function POST(request: NextRequest) {
 
     // Write file to disk
     await writeFile(filePath, buffer)
-    console.log(`[mrc] File written to: ${filePath}`)
+    console.log(`[mrc-upload] File written to: ${filePath}`)
+    console.log(`[mrc-upload] Public URL: ${publicUrl}`)
 
     // Database Operation
     // Get next sort order
