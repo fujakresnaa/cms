@@ -76,7 +76,7 @@ export function EventsSection() {
                 )}
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-3">{event.title}</h3>
-              <p className="text-gray-600 leading-relaxed text-sm">{event.description}</p>
+              <p className="text-gray-600 leading-relaxed text-sm whitespace-pre-wrap">{event.description}</p>
             </Card>
           ))}
         </div>

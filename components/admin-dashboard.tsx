@@ -867,23 +867,12 @@ export function AdminDashboard() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
 
-        // Read file as ArrayBuffer to ensure we have the binary data
-        const arrayBuffer = await new Promise<ArrayBuffer>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => resolve(reader.result as ArrayBuffer)
-          reader.onerror = () => reject(new Error('Failed to read file'))
-          reader.readAsArrayBuffer(file)
-        })
-
-        // Create a new Blob from the ArrayBuffer with the correct type
-        const blob = new Blob([arrayBuffer], { type: file.type })
-
-        // Create FormData with the blob
+        // Create FormData with the file directly
         const formData = new FormData()
-        formData.append("file", blob, file.name)
+        formData.append("file", file)
         formData.append("title", file.name.replace(/\.[^/.]+$/, ""))
 
-        console.log(`[Admin] Uploading ${file.name}, size: ${blob.size} bytes`)
+        console.log(`[Admin] Uploading ${file.name}, size: ${file.size} bytes`)
 
         const response = await fetch("/api/cms/gallery/upload", {
           method: "POST",
