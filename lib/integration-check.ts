@@ -19,14 +19,16 @@ export async function checkIntegrations(): Promise<IntegrationStatus> {
   }
 
   try {
-    // Check Supabase connection
-    const { createClient } = await import("./supabase/server")
-    const supabase = await createClient()
-
-    // Test database query
-    const { error: dbError } = await supabase.from("members").select("count").limit(1)
-    status.database = !dbError
-    status.supabase = !dbError
+    // Check Database connection using pg pool
+    const pool = (await import("@/lib/db")).default
+    const client = await pool.connect()
+    try {
+      const { rows } = await client.query("SELECT 1 as health_check")
+      status.database = rows.length > 0
+      status.supabase = true // Keep true for compatibility if needed, or set to same as database
+    } finally {
+      client.release()
+    }
 
     // Check CMS
     try {
