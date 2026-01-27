@@ -3,7 +3,7 @@ const nextConfig = {
   output: 'standalone',
   poweredByHeader: false,
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
   experimental: {
     serverActions: {

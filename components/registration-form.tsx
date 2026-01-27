@@ -93,10 +93,19 @@ export function RegistrationForm() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.alamatEmail)) {
       newErrors.alamatEmail = "Please enter a valid email"
     }
-    if (!formData.nomorTelephone.trim()) newErrors.nomorTelephone = "Phone number is required"
-    else if (!/^(\+62|08)[0-9]{9,}$/.test(formData.nomorTelephone.replace(/\s/g, ""))) {
-      newErrors.nomorTelephone = "Please enter a valid Indonesian phone number"
+
+    if (!formData.nomorTelephone.trim()) {
+      newErrors.nomorTelephone = "Phone number is required"
+    } else {
+      const phoneClean = formData.nomorTelephone.replace(/\s/g, "")
+      if (!/^(\+62|08)[0-9]{9,}$/.test(phoneClean)) {
+        newErrors.nomorTelephone = "Enter a valid phone number (+62 or 08...)"
+      }
     }
+
+    if (!formData.tipeMobile.trim()) newErrors.tipeMobile = "Car variant is required"
+    if (!formData.tahunKendaraan.trim()) newErrors.tahunKendaraan = "Year is required"
+    if (!formData.chapterDomisili.trim()) newErrors.chapterDomisili = "City is required"
     if (!formData.nomorPolisi.trim()) newErrors.nomorPolisi = "License plate is required"
     if (!formData.fotoKendaraan) newErrors.fotoKendaraan = "Vehicle photo is required"
 
@@ -114,6 +123,8 @@ export function RegistrationForm() {
 
   const handleSubmit = async () => {
     setIsSubmitting(true)
+    setErrors({}) // Clear previous errors
+
     try {
       const formDataToSend = new FormData()
       formDataToSend.append("namaLengkap", formData.namaLengkap)
@@ -137,6 +148,11 @@ export function RegistrationForm() {
       if (!response.ok) {
         if (data.errors) {
           setErrors(data.errors)
+          // If there are specific field errors, go back to the first step
+          const fieldWithError = Object.keys(data.errors).find(key => key !== 'submit')
+          if (fieldWithError) {
+            setCurrentStep("registration")
+          }
         } else {
           setErrors({ submit: data.error || "Registration failed" })
         }
@@ -145,7 +161,7 @@ export function RegistrationForm() {
 
       setCurrentStep("member")
     } catch (error) {
-      setErrors({ submit: "An error occurred. Please try again." })
+      setErrors({ submit: "A connection error occurred. Please try again." })
     } finally {
       setIsSubmitting(false)
     }
@@ -543,6 +559,13 @@ export function RegistrationForm() {
                   </div>
                 </div>
               </div>
+
+              {errors.submit && (
+                <div className="bg-red-400/10 border border-red-400 text-red-400 p-4 rounded-lg flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                  <span>{errors.submit}</span>
+                </div>
+              )}
 
               <div className="flex gap-4 pt-8">
                 <Button onClick={() => setCurrentStep("requirements")} variant="outline" className="flex-1 border-white/20 text-white hover:bg-white/10 py-6">

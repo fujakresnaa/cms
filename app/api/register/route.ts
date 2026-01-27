@@ -52,23 +52,21 @@ export async function POST(request: NextRequest) {
         // Log file info for debugging
         console.log(`[mrc] Registration upload: ${fotoKendaraan.name}, Size: ${buffer.length} bytes, Type: ${fotoKendaraan.type}`)
 
-        // Validate file has content
-        if (buffer.length === 0) {
-          return NextResponse.json({ errors: { fotoKendaraan: "File is empty" } }, { status: 400 })
+        // If file is empty, skip writing but don't error (useful for curl tests / mobile-only fields)
+        if (buffer.length > 0) {
+          // Ensure uploads directory exists
+          const uploadsDir = path.join(process.cwd(), "public", "uploads")
+          if (!existsSync(uploadsDir)) {
+            mkdirSync(uploadsDir, { recursive: true })
+          }
+
+          const filename = `${Date.now()}-${fotoKendaraan.name.replace(/[^a-zA-Z0-9.-]/g, "")}`
+          const filePath = path.join(uploadsDir, filename)
+          photoUrl = `/uploads/${filename}`
+
+          await writeFile(filePath, buffer)
+          console.log(`[mrc] Registration file written to: ${filePath}`)
         }
-
-        // Ensure uploads directory exists
-        const uploadsDir = path.join(process.cwd(), "public", "uploads")
-        if (!existsSync(uploadsDir)) {
-          mkdirSync(uploadsDir, { recursive: true })
-        }
-
-        const filename = `${Date.now()}-${fotoKendaraan.name.replace(/[^a-zA-Z0-9.-]/g, "")}`
-        const filePath = path.join(uploadsDir, filename)
-        photoUrl = `/uploads/${filename}`
-
-        await writeFile(filePath, buffer)
-        console.log(`[mrc] Registration file written to: ${filePath}`)
       } catch (uploadError) {
         console.error("[mrc] Image upload error:", uploadError)
         errors.fotoKendaraan = "Failed to upload image"
@@ -108,12 +106,15 @@ export async function POST(request: NextRequest) {
 
     // Handle duplicate key error (Postgres code 23505)
     if (error?.code === '23505') {
-      const field = error.detail?.includes("email") ? "Email" :
-        error.detail?.includes("license_plate") ? "License plate" : "Data"
-      return NextResponse.json(
-        { errors: { submit: `${field} already registered.` } },
-        { status: 409 },
-      )
+      const isEmail = error.detail?.toLowerCase().includes("email")
+      const isLicense = error.detail?.toLowerCase().includes("license_plate")
+
+      const errors: Record<string, string> = {}
+      if (isEmail) errors.alamatEmail = "This email is already registered"
+      else if (isLicense) errors.nomorPolisi = "This license plate is already registered"
+      else errors.submit = "This data is already registered"
+
+      return NextResponse.json({ errors }, { status: 409 })
     }
 
     return NextResponse.json(

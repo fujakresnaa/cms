@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react"
 import useEmblaCarousel from "embla-carousel-react"
+import Autoplay from "embla-carousel-autoplay"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
@@ -14,15 +15,38 @@ interface ShowcaseItem {
 export function ShowcaseSection() {
   const [showcase, setShowcase] = useState<ShowcaseItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
-    align: "center",
-    skipSnaps: false,
-    dragFree: false
-  })
 
-  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi])
-  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi])
+  const [emblaRef, emblaApi] = useEmblaCarousel(
+    {
+      loop: true,
+      align: "center",
+      skipSnaps: false,
+      duration: 30, // Optimized transition duration for smoothness
+    },
+    [
+      Autoplay({
+        delay: 5000,
+        stopOnInteraction: false,
+        stopOnMouseEnter: true,
+      })
+    ]
+  )
+
+  const scrollPrev = useCallback(() => {
+    if (emblaApi) {
+      emblaApi.scrollPrev()
+      const autoplay = emblaApi.plugins().autoplay
+      if (autoplay) autoplay.reset()
+    }
+  }, [emblaApi])
+
+  const scrollNext = useCallback(() => {
+    if (emblaApi) {
+      emblaApi.scrollNext()
+      const autoplay = emblaApi.plugins().autoplay
+      if (autoplay) autoplay.reset()
+    }
+  }, [emblaApi])
 
   const staticCars = [
     {
@@ -56,7 +80,10 @@ export function ShowcaseSection() {
           }))
           // Ensure enough items for loop to work smoothly if few items
           const items = galleryItems.length < 4
-            ? [...galleryItems, ...galleryItems, ...galleryItems].slice(0, 10)
+            ? [...galleryItems, ...galleryItems, ...galleryItems].slice(0, 10).map((item: any, idx: number) => ({
+              ...item,
+              id: `${item.id}-${idx}`
+            }))
             : galleryItems
           setShowcase(items)
         } else {
@@ -84,28 +111,6 @@ export function ShowcaseSection() {
 
     fetchShowcase()
   }, [])
-
-  // Custom Autoplay
-  useEffect(() => {
-    if (!emblaApi) return
-
-    const autoplay = setInterval(() => {
-      if (emblaApi.canScrollNext()) {
-        emblaApi.scrollNext()
-      } else {
-        emblaApi.scrollTo(0)
-      }
-    }, 4000) // 4 seconds
-
-    emblaApi.on("pointerDown", () => clearInterval(autoplay))
-    emblaApi.on("pointerUp", () => {
-      // Optional: Restart autoplay after interaction if desired, 
-      // but strictly "pointerDown" clearing it is safer for UX to prevent jumping while reading.
-      // For continuous autoplay, we'd need a more complex ref-based interval manager.
-    })
-
-    return () => clearInterval(autoplay)
-  }, [emblaApi])
 
   if (loading) return null
 
@@ -136,7 +141,7 @@ export function ShowcaseSection() {
                     <img
                       src={item.image_url || "/placeholder.svg"}
                       alt={item.title || "Showcase vehicle"}
-                      className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700 ease-in-out"
+                      className="w-full h-full object-cover will-change-transform transform group-hover:scale-110 transition-transform duration-1000 ease-out"
                       onError={(e) => {
                         e.currentTarget.src = "/placeholder.svg"
                       }}
