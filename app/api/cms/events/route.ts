@@ -1,13 +1,30 @@
 import { type NextRequest, NextResponse } from "next/server"
 import pool from "@/lib/db"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { rows } = await pool.query("SELECT * FROM events ORDER BY created_at DESC")
-    return NextResponse.json({ data: rows })
+    const { searchParams } = new URL(request.url)
+    const limit = searchParams.get("limit")
+    const offset = searchParams.get("offset") || "0"
+
+    // Get total count
+    const { rows: countRows } = await pool.query("SELECT COUNT(*) as total FROM events")
+    const total = parseInt(countRows[0].total)
+
+    // Build query with optional pagination
+    let query = "SELECT * FROM events ORDER BY created_at DESC"
+    const values: any[] = []
+
+    if (limit) {
+      query += ` LIMIT $1 OFFSET $2`
+      values.push(parseInt(limit), parseInt(offset))
+    }
+
+    const { rows } = await pool.query(query, values)
+    return NextResponse.json({ data: rows, total, limit: limit ? parseInt(limit) : null, offset: parseInt(offset) })
   } catch (error) {
     console.error("[mrc] Events catch error:", error)
-    return NextResponse.json({ data: [] })
+    return NextResponse.json({ data: [], total: 0 })
   }
 }
 

@@ -54,7 +54,7 @@ export function AboutSection() {
           </h2>
 
           {/* Description */}
-          <p className="text-lg text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto">{about.description}</p>
+          <p className="text-lg text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto whitespace-pre-wrap">{about.description}</p>
 
           {/* CTA Button */}
           <Link href="#events">

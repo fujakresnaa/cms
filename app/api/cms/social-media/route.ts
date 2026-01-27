@@ -13,6 +13,8 @@ export async function GET() {
           { id: "2", platform: "youtube", url: "#", icon_type: "youtube" },
           { id: "3", platform: "instagram", url: "#", icon_type: "instagram" },
           { id: "4", platform: "facebook", url: "#", icon_type: "facebook" },
+          { id: "5", platform: "email", url: "#", icon_type: "email" },
+          { id: "6", platform: "x", url: "#", icon_type: "x" },
         ],
       })
     }
@@ -26,6 +28,8 @@ export async function GET() {
         { id: "2", platform: "youtube", url: "#", icon_type: "youtube" },
         { id: "3", platform: "instagram", url: "#", icon_type: "instagram" },
         { id: "4", platform: "facebook", url: "#", icon_type: "facebook" },
+        { id: "5", platform: "email", url: "#", icon_type: "email" },
+        { id: "6", platform: "x", url: "#", icon_type: "x" },
       ],
     })
   }
@@ -34,18 +38,30 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
+    const { url, icon_type, platform } = body
 
+    if (!url || !platform || !icon_type) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    }
+
+    // Use UPSERT based on platform since it's UNIQUE
+    // This allows fixing placeholder IDs (like "1", "2") by inserting them if they don't exist
     const { rows } = await pool.query(
-      "UPDATE cms_social_media SET url = $1, icon_type = $2, platform = $3 WHERE id = $4 RETURNING *",
-      [body.url, body.icon_type, body.platform, body.id]
+      `INSERT INTO cms_social_media (platform, url, icon_type)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (platform)
+       DO UPDATE SET url = EXCLUDED.url, icon_type = EXCLUDED.icon_type, updated_at = now()
+       RETURNING *`,
+      [platform, url, icon_type]
     )
 
     if (rows.length === 0) {
-      return NextResponse.json({ error: "Failed to update" }, { status: 500 })
+      return NextResponse.json({ error: "Failed to update social media" }, { status: 500 })
     }
 
-    return NextResponse.json(rows[0])
+    return NextResponse.json({ data: rows[0] })
   } catch (error) {
+    console.error("[mrc] Social media update error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

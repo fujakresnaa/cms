@@ -22,6 +22,8 @@ import {
   Trash2,
   Plus,
   Globe,
+  ClipboardList,
+  RefreshCcw,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ImagePreview } from "./image-preview"
@@ -86,6 +88,10 @@ interface Event {
   title: string
   description: string
   icon: string
+  header_image?: string
+  event_time?: string
+  location?: string
+  status?: string
   created_at: string
 }
 
@@ -137,6 +143,17 @@ interface GalleryItem {
   title: string
   description: string
   sort_order: number
+  created_at: string
+}
+
+interface EventRegistration {
+  id: string
+  event_id: string
+  event_title?: string
+  full_name: string
+  email: string
+  phone_number: string
+  message: string
   created_at: string
 }
 
@@ -236,7 +253,13 @@ const translations = {
 }
 
 export function AdminDashboard() {
+  const [isMounted, setIsMounted] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   const [activeTab, setActiveTab] = useState("overview")
   const [members, setMembers] = useState<Member[]>([])
   const [stats, setStats] = useState({
@@ -253,12 +276,19 @@ export function AdminDashboard() {
   const [previewImage, setPreviewImage] = useState<string | null>(null)
   const [messageStartDate, setMessageStartDate] = useState("")
   const [messageEndDate, setMessageEndDate] = useState("")
+  const [regSearchTerm, setRegSearchTerm] = useState("")
+  const [regStartDate, setRegStartDate] = useState("")
+  const [regEndDate, setRegEndDate] = useState("")
+
 
   const [about, setAbout] = useState<CMSAbout>({ id: "", title: "", description: "", button_text: "" })
   const [benefits, setBenefits] = useState<CMSBenefit[]>([])
   const [socialMedia, setSocialMedia] = useState<CMSSocial[]>([])
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([])
   const [events, setEvents] = useState<Event[]>([])
+  const [registrations, setRegistrations] = useState<EventRegistration[]>([])
+  const [isFetchingRegistrations, setIsFetchingRegistrations] = useState(false)
+
   const [contact, setContact] = useState<ContactSection>({ id: "", title: "", description: "", phone: "", email: "" })
   const [membership, setMembership] = useState<MembershipSection>({ id: "", title: "", description: "", stats: [] })
   const [logo, setLogo] = useState<Logo>({ id: "", text: "", subtext: "", image_url: "" })
@@ -274,8 +304,17 @@ export function AdminDashboard() {
     copyright_text: "",
   })
   const [isSaving, setIsSaving] = useState(false)
-  const [newEvent, setNewEvent] = useState({ title: "", description: "", icon: "" })
+  const [newEvent, setNewEvent] = useState({
+    title: "",
+    description: "",
+    icon: "",
+    header_image: "",
+    event_time: "",
+    location: "",
+    status: "upcoming"
+  })
   const [showNewEventForm, setShowNewEventForm] = useState(false)
+  const [uploadingEventImage, setUploadingEventImage] = useState<string | null>(null)
 
   // Add gallery state
   const [gallery, setGallery] = useState<GalleryItem[]>([])
@@ -331,6 +370,7 @@ export function AdminDashboard() {
         fetch("/api/cms/hero").then((r) => r.json()),
         fetch("/api/cms/footer").then((r) => r.json()),
         fetch("/api/cms/gallery").then((r) => r.json()),
+        fetch("/api/cms/events/registrations").then((r) => r.json()),
       ])
 
       const [
@@ -344,7 +384,8 @@ export function AdminDashboard() {
         logoRes,
         heroRes,
         footerRes,
-        galleryRes, // Added gallery response
+        galleryRes,
+        registrationsRes,
       ] = results
 
       if (aboutRes.status === "fulfilled") {
@@ -398,6 +439,9 @@ export function AdminDashboard() {
       if (galleryRes.status === "fulfilled") {
         setGallery(galleryRes.value?.data || [])
       }
+      if (registrationsRes.status === "fulfilled") {
+        setRegistrations(registrationsRes.value?.data || [])
+      }
 
       console.log("[Admin] CMS data fetched successfully")
     } catch (error) {
@@ -426,8 +470,20 @@ export function AdminDashboard() {
         copyright_year: new Date().getFullYear(),
         copyright_text: "Mercedes-Benz W205CI Club Indonesia. All rights reserved.",
       })
-      // Set default for gallery
       setGallery([])
+    }
+  }
+
+  const fetchRegistrations = async () => {
+    setIsFetchingRegistrations(true)
+    try {
+      const response = await fetch("/api/cms/events/registrations")
+      const data = await response.json()
+      setRegistrations(data.data || [])
+    } catch (error) {
+      console.error("Error fetching registrations:", error)
+    } finally {
+      setIsFetchingRegistrations(false)
     }
   }
 
@@ -584,15 +640,19 @@ export function AdminDashboard() {
   }
 
   const updateSocialMedia = async (socialId: string, url: string) => {
+    const social = socialMedia.find((s) => s.id === socialId)
+    if (!social) return
+
     setIsSaving(true)
     try {
       const response = await fetch("/api/cms/social-media", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: socialId, url }),
+        body: JSON.stringify(social),
       })
       if (response.ok) {
-        setSocialMedia(socialMedia.map((s) => (s.id === socialId ? { ...s, url } : s)))
+        const { data: updatedSocial } = await response.json()
+        setSocialMedia(socialMedia.map(s => s.platform === updatedSocial.platform ? updatedSocial : s))
         alert("Social media link updated successfully")
       } else {
         alert("Failed to update social media link")
@@ -666,7 +726,15 @@ export function AdminDashboard() {
       if (response.ok) {
         const createdEvent = await response.json()
         setEvents([createdEvent, ...events])
-        setNewEvent({ title: "", description: "", icon: "" })
+        setNewEvent({
+          title: "",
+          description: "",
+          icon: "",
+          header_image: "",
+          event_time: "",
+          location: "",
+          status: "upcoming"
+        })
         setShowNewEventForm(false)
         alert("Event created successfully")
       } else {
@@ -676,6 +744,39 @@ export function AdminDashboard() {
       alert("Failed to create event")
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const uploadEventImage = async (file: File, eventId?: string) => {
+    if (!file) return null
+
+    setUploadingEventImage(eventId || 'new')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      if (eventId) {
+        formData.append('eventId', eventId)
+      }
+
+      const response = await fetch('/api/cms/events/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        return data.url
+      } else {
+        const error = await response.json()
+        alert(`Failed to upload image: ${error.error}`)
+        return null
+      }
+    } catch (error) {
+      console.error('Error uploading event image:', error)
+      alert('Failed to upload image')
+      return null
+    } finally {
+      setUploadingEventImage(null)
     }
   }
 
@@ -822,6 +923,27 @@ export function AdminDashboard() {
     return true
   })
 
+  const filteredRegistrations = registrations.filter((reg) => {
+    const matchesSearch =
+      reg.full_name.toLowerCase().includes(regSearchTerm.toLowerCase()) ||
+      reg.email.toLowerCase().includes(regSearchTerm.toLowerCase()) ||
+      (reg.event_title && reg.event_title.toLowerCase().includes(regSearchTerm.toLowerCase()))
+
+    if (!regStartDate && !regEndDate) return matchesSearch
+
+    const regDate = new Date(reg.created_at)
+    if (regStartDate) {
+      const start = new Date(regStartDate)
+      if (regDate < start) return false
+    }
+    if (regEndDate) {
+      const end = new Date(regEndDate)
+      end.setHours(23, 59, 59, 999)
+      if (regDate > end) return false
+    }
+    return matchesSearch
+  })
+
   const exportToCSV = () => {
     const headers = [
       "Full Name",
@@ -852,6 +974,29 @@ export function AdminDashboard() {
     const url = URL.createObjectURL(blob)
     link.setAttribute("href", url)
     link.setAttribute("download", `members_${new Date().toISOString().split("T")[0]}.csv`)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  const exportRegistrationsToCSV = () => {
+    const headers = ["Event", "Full Name", "Email", "Phone", "Message", "Registration Date"]
+    const rows = filteredRegistrations.map((reg) => [
+      reg.event_title || "Unknown Event",
+      reg.full_name,
+      reg.email,
+      reg.phone_number,
+      reg.message || "-",
+      new Date(reg.created_at).toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" }),
+    ])
+
+    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${cell}"`).join(",")).join("\n")
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+    const link = document.createElement("a")
+    const url = URL.createObjectURL(blob)
+    link.setAttribute("href", url)
+    link.setAttribute("download", `event_registrations_${new Date().toISOString().split("T")[0]}.csv`)
     link.style.visibility = "hidden"
     document.body.appendChild(link)
     link.click()
@@ -921,6 +1066,8 @@ export function AdminDashboard() {
     }
   }
 
+  if (!isMounted) return null
+
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
@@ -939,9 +1086,11 @@ export function AdminDashboard() {
           {[
             { icon: Calendar, label: "dashboard", id: "overview" },
             { icon: Users, label: "members", id: "members" },
+            { icon: Calendar, label: "Events", id: "events", isCustomLabel: true },
             { icon: MessageCircle, label: "messages", id: "messages" },
             // Added Gallery tab to sidebar
             { icon: FileText, label: "gallery", id: "gallery" },
+            { icon: ClipboardList, label: "Registrations", id: "registrations", isCustomLabel: true },
             { icon: FileText, label: "content", id: "content" },
             { icon: Settings, label: "settings", id: "settings" },
           ].map((item) => (
@@ -952,7 +1101,7 @@ export function AdminDashboard() {
                 }`}
             >
               <item.icon className="w-5 h-5 flex-shrink-0" />
-              {sidebarOpen && <span>{t(item.label as any)}</span>}
+              {sidebarOpen && <span>{(item as any).isCustomLabel ? item.label : t(item.label as any)}</span>}
             </button>
           ))}
         </nav>
@@ -1311,6 +1460,116 @@ export function AdminDashboard() {
               </motion.div >
             </TabsContent >
 
+            {/* Registrations Tab */}
+            <TabsContent value="registrations" className="space-y-6">
+              <motion.div {...fadeIn}>
+                <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+                  <h1 className="text-3xl font-serif font-bold text-foreground">Event Registrations</h1>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={exportRegistrationsToCSV}
+                      className="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+                    >
+                      <Download className="w-4 h-4" />
+                      Export CSV
+                    </button>
+                    <button
+                      onClick={fetchRegistrations}
+                      className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+                      disabled={isFetchingRegistrations}
+                    >
+                      <RefreshCcw className={`w-4 h-4 ${isFetchingRegistrations ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </button>
+                  </div>
+                </div>
+
+                <Card className={`p-6 ${glassCard} mb-6`}>
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1 relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground/40" />
+                      <input
+                        type="text"
+                        placeholder="Search by name, email, or event..."
+                        value={regSearchTerm}
+                        onChange={(e) => setRegSearchTerm(e.target.value)}
+                        className="w-full pl-10 pr-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="date"
+                        value={regStartDate}
+                        onChange={(e) => setRegStartDate(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="date"
+                        value={regEndDate}
+                        onChange={(e) => setRegEndDate(e.target.value)}
+                        className="w-full px-4 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                    {(regSearchTerm || regStartDate || regEndDate) && (
+                      <button
+                        onClick={() => {
+                          setRegSearchTerm("")
+                          setRegStartDate("")
+                          setRegEndDate("")
+                        }}
+                        className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </Card>
+
+                <Card className={`p-6 ${glassCard}`}>
+                  {filteredRegistrations.length === 0 ? (
+                    <div className="text-center py-12">
+                      <ClipboardList className="w-12 h-12 text-foreground/40 mx-auto mb-4" />
+                      <p className="text-foreground/60">No matching registrations found.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b border-border">
+                            <th className="py-4 px-4 font-semibold text-foreground/70">Event</th>
+                            <th className="py-4 px-4 font-semibold text-foreground/70">Name</th>
+                            <th className="py-4 px-4 font-semibold text-foreground/70">Contact</th>
+                            <th className="py-4 px-4 font-semibold text-foreground/70">Message</th>
+                            <th className="py-4 px-4 font-semibold text-foreground/70">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredRegistrations.map((reg) => (
+                            <tr key={reg.id} className="border-b border-border/50 hover:bg-white/5 transition-colors">
+                              <td className="py-4 px-4 font-bold text-primary">{reg.event_title || "Unknown Event"}</td>
+                              <td className="py-4 px-4 font-medium text-foreground">{reg.full_name}</td>
+                              <td className="py-4 px-4">
+                                <div className="text-sm text-foreground">{reg.email}</div>
+                                <div className="text-xs text-foreground/60">{reg.phone_number}</div>
+                              </td>
+                              <td className="py-4 px-4 text-sm text-foreground/80 max-w-xs truncate">
+                                {reg.message || "-"}
+                              </td>
+                              <td className="py-4 px-4 text-sm text-foreground/60">
+                                {new Date(reg.created_at).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </Card>
+              </motion.div>
+            </TabsContent>
+
             {/* Messages Tab */}
             < TabsContent value="messages" className="space-y-6" >
               <motion.div {...fadeIn}>
@@ -1409,6 +1668,300 @@ export function AdminDashboard() {
                 )}
               </motion.div>
             </TabsContent >
+
+            {/* Events Tab (NEW - Dedicated Events Management) */}
+            <TabsContent value="events" className="space-y-6">
+              <motion.div {...fadeIn}>
+                <div className="flex items-center justify-between mb-6">
+                  <h1 className="text-3xl font-serif font-bold text-foreground">Events Management</h1>
+                  <Button
+                    onClick={() => setShowNewEventForm(!showNewEventForm)}
+                    className="bg-primary hover:bg-primary/90 text-white"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add New Event
+                  </Button>
+                </div>
+
+                {/* Create New Event Form */}
+                {showNewEventForm && (
+                  <Card className={`p-6 ${glassCard} mb-6`}>
+                    <h2 className="text-xl font-bold text-foreground mb-4">Create New Event</h2>
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Event Title *</label>
+                          <input
+                            type="text"
+                            placeholder="Enter event title"
+                            value={newEvent.title}
+                            onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Icon (Emoji or URL)</label>
+                          <input
+                            type="text"
+                            placeholder="🎯 or /uploads/icon.png"
+                            value={newEvent.icon}
+                            onChange={(e) => setNewEvent({ ...newEvent, icon: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-foreground mb-2">Description *</label>
+                        <textarea
+                          placeholder="Enter event description"
+                          value={newEvent.description}
+                          onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                          rows={4}
+                          className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-foreground mb-2">Header Image</label>
+                        <div className="flex items-center gap-4">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                const url = await uploadEventImage(file)
+                                if (url) {
+                                  setNewEvent({ ...newEvent, header_image: url })
+                                }
+                              }
+                            }}
+                            className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                          {uploadingEventImage === 'new' && <span className="text-primary">Uploading...</span>}
+                        </div>
+                        {newEvent.header_image && (
+                          <div className="mt-2">
+                            <img src={newEvent.header_image} alt="Preview" className="h-32 object-cover rounded-lg" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Event Time</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. 19:00 - 22:00"
+                            value={newEvent.event_time}
+                            onChange={(e) => setNewEvent({ ...newEvent, event_time: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Location</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. Jakarta Selatan"
+                            value={newEvent.location}
+                            onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Status</label>
+                          <select
+                            value={newEvent.status}
+                            onChange={(e) => setNewEvent({ ...newEvent, status: e.target.value })}
+                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                          >
+                            <option value="upcoming">Upcoming</option>
+                            <option value="coming_soon">Coming Soon</option>
+                            <option value="past">Past Event</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={createEvent}
+                          disabled={isSaving}
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          {isSaving ? "Creating..." : "Create Event"}
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            setShowNewEventForm(false)
+                            setNewEvent({
+                              title: "",
+                              description: "",
+                              icon: "",
+                              header_image: "",
+                              event_time: "",
+                              location: "",
+                              status: "upcoming"
+                            })
+                          }}
+                          className="bg-white/20 hover:bg-white/30 text-white"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Events List */}
+                <Card className={`p-6 ${glassCard}`}>
+                  <h2 className="text-xl font-bold text-foreground mb-4">All Events ({events.length})</h2>
+                  {events.length === 0 ? (
+                    <div className="p-12 text-center">
+                      <Calendar className="w-12 h-12 text-foreground/40 mx-auto mb-4" />
+                      <p className="text-foreground/60">No events yet. Create your first event!</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {events.map((event) => (
+                        <div key={event.id} className="border border-border rounded-lg p-4 bg-white/5">
+                          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-4">
+                            {/* Icon Preview */}
+                            <div className="lg:col-span-1">
+                              <label className="block text-sm font-semibold text-foreground mb-2">Icon</label>
+                              <div className="flex items-center gap-2">
+                                <div className="w-12 h-12 flex-shrink-0 bg-white/10 rounded flex items-center justify-center border border-border overflow-hidden">
+                                  {(event.icon?.startsWith('/') || event.icon?.startsWith('http')) ? (
+                                    <img src={event.icon} alt="Icon" className="w-full h-full object-cover" />
+                                  ) : (
+                                    <span className="text-2xl">{event.icon || "🎯"}</span>
+                                  )}
+                                </div>
+                                <input
+                                  type="text"
+                                  value={event.icon}
+                                  onChange={(e) => handleEventChange(event.id, "icon", e.target.value)}
+                                  className="flex-1 px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                                  placeholder="Emoji or URL"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Title */}
+                            <div className="lg:col-span-2">
+                              <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
+                              <input
+                                type="text"
+                                value={event.title}
+                                onChange={(e) => handleEventChange(event.id, "title", e.target.value)}
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              />
+                            </div>
+
+                            {/* Actions */}
+                            <div className="lg:col-span-1 flex items-end gap-2">
+                              <Button
+                                onClick={() => saveEvent(event.id)}
+                                disabled={isSaving}
+                                className="bg-primary hover:bg-primary/90 text-white flex-1"
+                              >
+                                <Save className="w-4 h-4 mr-1" />
+                                Save
+                              </Button>
+                              <button
+                                onClick={() => deleteEvent(event.id)}
+                                className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition"
+                                title="Delete Event"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Description */}
+                          <div className="mb-4">
+                            <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
+                            <textarea
+                              value={event.description}
+                              onChange={(e) => handleEventChange(event.id, "description", e.target.value)}
+                              rows={3}
+                              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                          </div>
+
+                          {/* Header Image */}
+                          <div className="mb-4">
+                            <label className="block text-sm font-semibold text-foreground mb-2">Header Image</label>
+                            <div className="flex items-start gap-4">
+                              <div className="flex-1">
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0]
+                                    if (file) {
+                                      const url = await uploadEventImage(file, event.id)
+                                      if (url) {
+                                        handleEventChange(event.id, "header_image", url)
+                                      }
+                                    }
+                                  }}
+                                  className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                />
+                                {uploadingEventImage === event.id && (
+                                  <span className="text-primary text-sm mt-1 block">Uploading...</span>
+                                )}
+                              </div>
+                              {event.header_image && (
+                                <div className="flex-shrink-0">
+                                  <img
+                                    src={event.header_image}
+                                    alt="Header preview"
+                                    className="h-20 w-32 object-cover rounded-lg border border-border"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Extra Fields (Time, Location, Status) */}
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <label className="block text-sm font-semibold text-foreground mb-2">Event Time</label>
+                              <input
+                                type="text"
+                                value={event.event_time || ""}
+                                onChange={(e) => handleEventChange(event.id, "event_time", e.target.value)}
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                                placeholder="e.g. 19:00 - 22:00"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-foreground mb-2">Location</label>
+                              <input
+                                type="text"
+                                value={event.location || ""}
+                                onChange={(e) => handleEventChange(event.id, "location", e.target.value)}
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                                placeholder="e.g. Jakarta Selatan"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-foreground mb-2">Status</label>
+                              <select
+                                value={event.status || "upcoming"}
+                                onChange={(e) => handleEventChange(event.id, "status", e.target.value)}
+                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-sm"
+                              >
+                                <option value="upcoming">Upcoming</option>
+                                <option value="coming_soon">Coming Soon</option>
+                                <option value="past">Past Event</option>
+                              </select>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </motion.div>
+            </TabsContent>
 
             {/* Gallery Tab (NEW) */}
             < TabsContent value="gallery" className="space-y-6" >
@@ -1655,127 +2208,6 @@ export function AdminDashboard() {
                   )}
                 </Card>
 
-                {/* Events Section */}
-                <Card className={`p-6 ${glassCard} mb-6`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-foreground">Events</h2>
-                    <Button
-                      onClick={() => setShowNewEventForm(!showNewEventForm)}
-                      className="bg-primary hover:bg-primary/90 text-white"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Event
-                    </Button>
-                  </div>
-
-                  {showNewEventForm && (
-                    <div className="mb-6 p-4 bg-white/5 rounded-lg space-y-4">
-                      <input
-                        type="text"
-                        placeholder="Event Title"
-                        value={newEvent.title}
-                        onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
-                        className="w-full px-4 py-2 border border-border rounded-lg"
-                      />
-                      <textarea
-                        placeholder="Event Description"
-                        value={newEvent.description}
-                        onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
-                        rows={3}
-                        className="w-full px-4 py-2 border border-border rounded-lg"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Icon (emoji or icon type)"
-                        value={newEvent.icon}
-                        onChange={(e) => setNewEvent({ ...newEvent, icon: e.target.value })}
-                        className="w-full px-4 py-2 border border-border rounded-lg"
-                      />
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={createEvent}
-                          disabled={isSaving}
-                          className="bg-green-600 hover:bg-green-700 text-white"
-                        >
-                          Create
-                        </Button>
-                        <Button
-                          onClick={() => setShowNewEventForm(false)}
-                          className="bg-white/20 hover:bg-white/30 text-white"
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-4">
-                    {events.map((event) => (
-                      <div key={event.id} className="border-b border-border pb-4">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                          <div>
-                            <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
-                            <input
-                              type="text"
-                              value={event.title}
-                              onChange={(e) => handleEventChange(event.id, "title", e.target.value)}
-                              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold text-foreground mb-2">Icon</label>
-                            <div className="flex gap-2 items-center">
-                              <div className="w-10 h-10 flex-shrink-0 bg-white/5 rounded flex items-center justify-center border border-border overflow-hidden">
-                                {(event.icon?.startsWith('/') || event.icon?.startsWith('http')) ? (
-                                  <img
-                                    src={event.icon}
-                                    alt="Icon"
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <span className="text-2xl">{event.icon || "🎯"}</span>
-                                )}
-                              </div>
-                              <input
-                                type="text"
-                                value={event.icon}
-                                onChange={(e) => handleEventChange(event.id, "icon", e.target.value)}
-                                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                                placeholder="Emoji or Image URL"
-                              />
-                            </div>
-                          </div>
-                          <div className="flex items-end gap-2">
-                            <Button
-                              onClick={() => saveEvent(event.id)}
-                              disabled={isSaving}
-                              className="bg-primary hover:bg-primary/90 text-white flex-1"
-                            >
-                              <Save className="w-4 h-4 mr-2" />
-                              Save
-                            </Button>
-                            <button
-                              onClick={() => deleteEvent(event.id)}
-                              className="p-2 bg-red-100 text-red-700 rounded hover:bg-red-200 transition"
-                              title="Delete Event"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                        <div className="mt-4">
-                          <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
-                          <textarea
-                            value={event.description}
-                            onChange={(e) => handleEventChange(event.id, "description", e.target.value)}
-                            rows={3}
-                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
 
                 {/* Membership Section */}
                 <Card className={`p-6 ${glassCard} mb-6`}>
@@ -2047,32 +2479,49 @@ export function AdminDashboard() {
                 <Card className={`p-6 ${glassCard} mb-6`}>
                   <h2 className="text-xl font-bold text-foreground mb-4">Social Media Links</h2>
                   <div className="space-y-4">
-                    {socialMedia.map((social) => (
-                      <div key={social.id} className="flex gap-4 items-end">
-                        <div className="flex-1">
-                          <label className="block text-sm font-semibold text-foreground mb-2 capitalize">
-                            {social.platform}
-                          </label>
-                          <input
-                            type="url"
-                            value={social.url}
-                            onChange={(e) => {
-                              const newUrl = e.target.value
-                              setSocialMedia(socialMedia.map((s) => (s.id === social.id ? { ...s, url: newUrl } : s)))
+                    {['whatsapp', 'instagram', 'facebook', 'youtube', 'email', 'x'].map((platform) => {
+                      const social = socialMedia.find(s => s.platform === platform) || {
+                        id: `temp-${platform}`,
+                        platform,
+                        url: "",
+                        icon_type: platform
+                      }
+
+                      return (
+                        <div key={platform} className="flex gap-4 items-end">
+                          <div className="flex-1">
+                            <label className="block text-sm font-semibold text-foreground mb-2 capitalize">
+                              {platform === 'x' ? 'X (formerly Twitter)' : platform}
+                            </label>
+                            <input
+                              type={platform === 'email' ? 'email' : 'url'}
+                              value={social.url === '#' ? '' : social.url}
+                              onChange={(e) => {
+                                const newUrl = e.target.value
+                                const exists = socialMedia.find(s => s.platform === platform)
+                                if (exists) {
+                                  setSocialMedia(socialMedia.map((s) => (s.platform === platform ? { ...s, url: newUrl } : s)))
+                                } else {
+                                  setSocialMedia([...socialMedia, { ...social, url: newUrl }])
+                                }
+                              }}
+                              placeholder={platform === 'email' ? 'email@example.com' : "https://..."}
+                              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background"
+                            />
+                          </div>
+                          <Button
+                            onClick={() => {
+                              const currentSocial = socialMedia.find(s => s.platform === platform) || { ...social }
+                              updateSocialMedia(currentSocial.id, currentSocial.url)
                             }}
-                            placeholder="https://..."
-                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          />
+                            disabled={isSaving}
+                            className="bg-primary hover:bg-primary/90 text-white"
+                          >
+                            <Save className="w-4 h-4" />
+                          </Button>
                         </div>
-                        <Button
-                          onClick={() => updateSocialMedia(social.id, social.url)}
-                          disabled={isSaving}
-                          className="bg-primary hover:bg-primary/90 text-white"
-                        >
-                          <Save className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 </Card>
               </motion.div>

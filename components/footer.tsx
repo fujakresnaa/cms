@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Facebook, Instagram, Youtube, MessageCircle } from "lucide-react"
+import { Facebook, Instagram, Youtube, MessageCircle, Mail, Twitter } from "lucide-react"
 import { useEffect, useState } from "react"
 
 interface SocialLink {
@@ -73,6 +73,10 @@ export function Footer() {
         return <Instagram className="w-5 h-5" />
       case "facebook":
         return <Facebook className="w-5 h-5" />
+      case "email":
+        return <Mail className="w-5 h-5" />
+      case "x":
+        return <Twitter className="w-5 h-5" />
       default:
         return null
     }
