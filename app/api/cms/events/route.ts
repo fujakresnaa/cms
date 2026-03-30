@@ -57,13 +57,18 @@ export async function PUT(request: NextRequest) {
     const { rows } = await pool.query(query, values)
 
     if (rows.length === 0) {
-      return NextResponse.json({ error: "Failed to update event" }, { status: 500 })
+      console.warn(`[mrc] Event update failed: No event found with id ${body.id}`)
+      return NextResponse.json({ error: `Event not found (ID: ${body.id})` }, { status: 404 })
     }
 
     return NextResponse.json(rows[0])
-  } catch (error) {
+  } catch (error: any) {
     console.error("[mrc] Error updating event:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({
+      error: "Internal server error",
+      details: error.message,
+      code: error.code
+    }, { status: 500 })
   }
 }
 

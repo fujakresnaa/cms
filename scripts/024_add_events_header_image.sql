@@ -1,7 +1,7 @@
--- Migration: Add header_image column to events table
--- Run this script against your PostgreSQL database
+-- Migration: Add additional columns to events table
+-- header_image, event_time, location, status
 
 ALTER TABLE public.events ADD COLUMN IF NOT EXISTS header_image TEXT;
-
--- Update the schema.sql comment for reference
-COMMENT ON COLUMN public.events.header_image IS 'URL to the header image for the event detail page';
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS event_time TEXT;
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS location TEXT;
+ALTER TABLE public.events ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'upcoming';

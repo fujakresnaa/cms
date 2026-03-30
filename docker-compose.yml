@@ -11,6 +11,7 @@ services:
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL:-postgresql://fuja:password@db:5432/cms_mercy}
+      - NEXT_PUBLIC_BASE_URL=https://mbw205ci.com
     restart: unless-stopped
     depends_on:
       - db

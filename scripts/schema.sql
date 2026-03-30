@@ -35,7 +35,25 @@ CREATE TABLE IF NOT EXISTS public.events (
   description TEXT NOT NULL,
   icon TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  header_image TEXT,
+  event_time TEXT,
+  location TEXT,
+  status TEXT DEFAULT 'upcoming'
+);
+
+COMMENT ON COLUMN public.events.header_image IS 'URL to the header image for the event detail page';
+COMMENT ON COLUMN public.events.status IS 'Status of the event: upcoming, past event, coming soon';
+
+-- Event Registrations table
+CREATE TABLE IF NOT EXISTS public.event_registrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
+  full_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone_number TEXT NOT NULL,
+  message TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
 -- Showcase table
