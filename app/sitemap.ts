@@ -1,23 +1,21 @@
 import { MetadataRoute } from 'next'
-import pool from "@/lib/db"
-
-export const dynamic = 'force-dynamic'
+import pool from '@/lib/db'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://mbw205ci.com'
 
-  // Fetch all events for the sitemap
-  let eventEntries: any[] = []
+  // Fetch all events to include in sitemap
+  let eventUrls: MetadataRoute.Sitemap = []
   try {
-    const { rows } = await pool.query("SELECT id, created_at FROM events ORDER BY created_at DESC")
-    eventEntries = rows.map((event) => ({
+    const { rows } = await pool.query('SELECT id, created_at FROM events ORDER BY created_at DESC')
+    eventUrls = rows.map((event) => ({
       url: `${baseUrl}/events/${event.id}`,
       lastModified: new Date(event.created_at),
-      changeFrequency: 'weekly',
-      priority: 0.6,
+      changeFrequency: 'weekly' as const,
+      priority: 0.7,
     }))
   } catch (error) {
-    console.error("Error fetching events for sitemap:", error)
+    console.error('Error fetching events for sitemap:', error)
   }
 
   return [
@@ -28,17 +26,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1,
     },
     {
-      url: `${baseUrl}/login`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.3,
-    },
-    {
       url: `${baseUrl}/register`,
       lastModified: new Date(),
       changeFrequency: 'monthly',
-      priority: 0.3,
+      priority: 0.8,
     },
-    ...eventEntries,
+    ...eventUrls,
   ]
 }

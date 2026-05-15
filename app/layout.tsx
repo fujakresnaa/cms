@@ -24,8 +24,8 @@ export const metadata: Metadata = {
     default: "Mercedes-Benz W205CI Club Indonesia",
     template: "%s | W205CI Club Indonesia",
   },
-  description: "The official community for Mercedes-Benz W205 enthusiasts in Indonesia. Join us for exclusive events, night drives, and technical sharing.",
-  keywords: ["Mercedes-Benz", "W205", "W205CI", "Car Club", "Indonesia", "C-Class", "Automotive"],
+  description: "Komunitas resmi pecinta Mercedes-Benz W205 di Indonesia. Bergabunglah dengan kami untuk event eksklusif, night drive, technical sharing, dan persaudaraan tanpa batas.",
+  keywords: ["Mercedes-Benz Indonesia", "W205CI", "W205 Club Indonesia", "Komunitas Mercedes-Benz", "C-Class Indonesia", "MBClub Indonesia", "Mercy W205"],
   authors: [{ name: "W205CI Club Indonesia" }],
   creator: "W205CI Club Indonesia",
   publisher: "W205CI Club Indonesia",
@@ -39,8 +39,8 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   openGraph: {
-    title: "Mercedes-Benz W205CI Club Indonesia",
-    description: "The official community for Mercedes-Benz W205 enthusiasts in Indonesia.",
+    title: "Mercedes-Benz W205CI Club Indonesia | Official Community",
+    description: "Komunitas resmi pecinta Mercedes-Benz W205 di Indonesia. Join the brotherhood.",
     url: process.env.NEXT_PUBLIC_BASE_URL || "https://mbw205ci.com",
     siteName: "W205CI Club Indonesia",
     images: [
@@ -56,8 +56,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mercedes-Benz W205CI Club Indonesia",
-    description: "The official community for Mercedes-Benz W205 enthusiasts in Indonesia.",
+    title: "Mercedes-Benz W205CI Club Indonesia | Official Community",
+    description: "Komunitas resmi pecinta Mercedes-Benz W205 di Indonesia. Join the brotherhood.",
     images: ["/car-club-members-meeting-luxury.jpg"],
   },
   robots: {
