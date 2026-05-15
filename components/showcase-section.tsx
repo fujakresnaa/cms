@@ -5,6 +5,7 @@ import useEmblaCarousel from "embla-carousel-react"
 import Autoplay from "embla-carousel-autoplay"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { motion } from "framer-motion"
 
 interface ShowcaseItem {
   id: string
@@ -115,18 +116,24 @@ export function ShowcaseSection() {
   if (loading) return null
 
   return (
-    <section className="py-24 px-4 sm:px-6 lg:px-8 bg-neutral-50 overflow-hidden">
+    <section className="py-32 px-4 sm:px-6 lg:px-8 bg-background overflow-hidden relative ambient-glow">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
-        <div className="text-center mb-16">
-          <span className="text-xs font-semibold text-gray-600 tracking-widest uppercase">● SHOWCASE</span>
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mt-4 mb-6 text-pretty">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <span className="font-accent text-primary">● SHOWCASE</span>
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-sans font-bold text-foreground mt-4 mb-6 text-pretty tracking-tight">
             W205CI Showcase
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed font-light">
             Explore a collection of iconic W205CI vehicles. Each tells a story of elegance, passion, and individuality.
           </p>
-        </div>
+        </motion.div>
 
         {/* Carousel */}
         <div className="relative">
@@ -137,7 +144,7 @@ export function ShowcaseSection() {
                   key={item.id}
                   className="pl-4 flex-[0_0_90%] min-w-0 sm:flex-[0_0_60%] md:flex-[0_0_50%] lg:flex-[0_0_40%]"
                 >
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-xl shadow-lg group cursor-pointer border border-white/20">
+                  <div className="relative aspect-[4/3] overflow-hidden rounded-sm shadow-2xl group cursor-pointer border border-primary/20">
                     <img
                       src={item.image_url || "/placeholder.svg"}
                       alt={item.title || "Showcase vehicle"}
@@ -153,24 +160,30 @@ export function ShowcaseSection() {
           </div>
 
           {/* Navigation Buttons */}
-          <div className="flex justify-center gap-4 mt-8">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="flex justify-center gap-6 mt-12"
+          >
             <Button
               variant="outline"
               size="icon"
-              className="rounded-full w-12 h-12 border-gray-300 hover:bg-white hover:text-black transition-colors"
+              className="rounded-full w-14 h-14 border-primary/40 bg-card/40 backdrop-blur-md text-primary hover:bg-metallic-gold hover:text-primary-foreground hover:border-transparent transition-all duration-300 hover:scale-110 shadow-lg"
               onClick={scrollPrev}
             >
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="w-6 h-6" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              className="rounded-full w-12 h-12 border-gray-300 hover:bg-white hover:text-black transition-colors"
+              className="rounded-full w-14 h-14 border-primary/40 bg-card/40 backdrop-blur-md text-primary hover:bg-metallic-gold hover:text-primary-foreground hover:border-transparent transition-all duration-300 hover:scale-110 shadow-lg"
               onClick={scrollNext}
             >
-              <ChevronRight className="w-5 h-5" />
+              <ChevronRight className="w-6 h-6" />
             </Button>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { motion } from "framer-motion"
 
 interface HeroData {
   id: string
@@ -17,6 +18,18 @@ export function HeroSection() {
   const [hero, setHero] = useState<HeroData | null>(null)
   const [loading, setLoading] = useState(true)
   const [lastTimestamp, setLastTimestamp] = useState<number>(0)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePosition({
+        x: (e.clientX / window.innerWidth - 0.5) * 20,
+        y: (e.clientY / window.innerHeight - 0.5) * 20,
+      })
+    }
+    window.addEventListener("mousemove", handleMouseMove)
+    return () => window.removeEventListener("mousemove", handleMouseMove)
+  }, [])
 
   const fetchHero = useCallback(async (forceRefresh = false) => {
     try {
@@ -107,44 +120,112 @@ export function HeroSection() {
   }
 
   return (
-    <section className="relative w-full h-screen flex items-center justify-center overflow-hidden pt-16">
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{
-          backgroundImage: heroData.background_image_url
-            ? `url(${heroData.background_image_url})`
-            : "url(/images/MercedesBenz.jpg)",
-          backgroundAttachment: "fixed",
+    <section className="relative h-screen min-h-[700px] w-full overflow-hidden bg-black flex items-center justify-center">
+      {/* Background with Mouse Parallax */}
+      <motion.div 
+        className="absolute inset-0 z-0"
+        animate={{ 
+          x: mousePosition.x,
+          y: mousePosition.y,
+          scale: 1.05
         }}
+        transition={{ type: "tween", ease: "linear", duration: 0 }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/30 to-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black z-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 z-10" />
+        <img
+          src={heroData.background_image_url || "/images/MercedesBenz.jpg"}
+          alt="Mercedes-Benz W205"
+          className="h-full w-full object-cover opacity-80"
+        />
+      </motion.div>
+
+      {/* Floating Ambient Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div 
+          animate={{ 
+            x: [0, 100, -50, 0],
+            y: [0, -50, 100, 0],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[120px]"
+        />
+        <motion.div 
+          animate={{ 
+            x: [0, -120, 80, 0],
+            y: [0, 100, -60, 0],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[150px]"
+        />
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 text-center text-white max-w-4xl px-4 sm:px-6 lg:px-8">
-        {/* Logo Section */}
-        <div className="mb-8 flex justify-center items-center gap-3">
-          <span className="text-sm font-semibold text-white/90 tracking-widest">MBW205CI</span>
-          <div className="w-6 h-6 rounded-full border-2 border-white/80 flex items-center justify-center">
-            <div className="w-2 h-2 bg-white/80 rounded-full"></div>
-          </div>
-        </div>
+      <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-20">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+          className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md mb-10"
+        >
+          <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(212,175,55,1)]" />
+          <span className="font-accent text-white/80">W205CI CLUB INDONESIA</span>
+        </motion.div>
 
-        {/* Main Heading */}
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-6 leading-tight text-pretty">{heroData.title}</h1>
+        <motion.h1
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="text-5xl sm:text-7xl lg:text-8xl font-sans font-bold mb-8 leading-tight tracking-tight text-white drop-shadow-2xl relative"
+        >
+          <span className="relative inline-block">
+            {heroData.title}
+            <motion.div 
+              initial={{ left: "-100%" }}
+              animate={{ left: "200%" }}
+              transition={{ duration: 2, delay: 1, repeat: Infinity, repeatDelay: 4 }}
+              className="absolute top-0 h-full w-20 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-20deg] z-10 pointer-events-none"
+            />
+          </span>
+        </motion.h1>
 
-        {/* Subheading */}
-        <p className="text-base sm:text-lg text-white/90 mb-10 max-w-3xl mx-auto text-pretty leading-relaxed">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+          className="text-lg md:text-2xl text-white/70 max-w-2xl mx-auto mb-14 leading-relaxed font-light"
+        >
           {heroData.description}
-        </p>
+        </motion.p>
 
         {/* CTA Button */}
-        <Link href="/register">
-          <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 text-base font-semibold">
-            {heroData.button_text}
-          </Button>
-        </Link>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.8 }}
+        >
+          <Link href="/register">
+            <Button size="lg" className="bg-metallic-gold text-primary-foreground px-12 py-7 text-base font-semibold tracking-wide rounded-sm shadow-[0_0_30px_rgba(212,175,55,0.2)] transition-all hover:shadow-[0_0_40px_rgba(212,175,55,0.3)] hover:scale-105 border-0">
+              {heroData.button_text}
+            </Button>
+          </Link>
+        </motion.div>
       </div>
+      {/* Scroll Indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5, duration: 1 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
+      >
+        <span className="font-accent text-[8px] text-white/40 tracking-[0.3em]">EXPLORE</span>
+        <div className="w-[1px] h-12 bg-gradient-to-b from-primary/60 to-transparent relative overflow-hidden">
+          <motion.div 
+            animate={{ y: ["-100%", "100%"] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute top-0 w-full h-1/2 bg-white"
+          />
+        </div>
+      </motion.div>
     </section>
   )
 }

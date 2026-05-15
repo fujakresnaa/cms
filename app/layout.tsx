@@ -1,11 +1,21 @@
 import type React from "react"
 import type { Metadata } from "next"
 
-import "@fontsource/inter/400.css"
-import "@fontsource/inter/600.css"
-import "@fontsource/playfair-display/400.css"
-import "@fontsource/playfair-display/700.css"
+import { Outfit, Cormorant_Garamond } from "next/font/google"
 import "./globals.css"
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+})
+
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin"],
+  variable: "--font-serif",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: {
@@ -72,8 +82,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`antialiased font-sans`} suppressHydrationWarning>
+    <html lang="en" className={`dark ${outfit.variable} ${cormorant.variable}`}>
+      <body className="antialiased font-sans" suppressHydrationWarning>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

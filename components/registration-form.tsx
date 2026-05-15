@@ -168,10 +168,10 @@ export function RegistrationForm() {
   }
 
   // Styles
-  const glassCard = "bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl"
-  const inputStyle = "w-full px-4 py-3 rounded-lg bg-black/20 border border-white/10 text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#D4AF37]/50 focus:border-[#D4AF37]/50 transition-all font-sans"
-  const labelStyle = "block text-sm font-semibold text-white/90 mb-2 font-serif tracking-wide"
-  const headingStyle = "text-3xl font-serif font-bold text-white mb-8"
+  const glassCard = "bg-card/40 backdrop-blur-xl border border-border/50 shadow-2xl"
+  const inputStyle = "w-full px-5 py-4 rounded-sm bg-background/80 border border-border/50 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all font-sans text-sm"
+  const labelStyle = "font-accent text-muted-foreground mb-3 block"
+  const headingStyle = "text-4xl font-sans font-bold text-foreground mb-10 tracking-tight"
 
   const fadeIn = {
     initial: { opacity: 0, y: 10 },
@@ -196,12 +196,12 @@ export function RegistrationForm() {
                 initial={false}
                 animate={{
                   scale: step.id === currentStep ? 1.1 : 1,
-                  backgroundColor: step.id === currentStep || steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep) ? "#D4AF37" : "rgba(255,255,255,0.1)",
-                  borderColor: step.id === currentStep ? "#D4AF37" : "rgba(255,255,255,0.2)"
+                  backgroundColor: step.id === currentStep || steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep) ? "var(--color-primary)" : "transparent",
+                  borderColor: step.id === currentStep ? "var(--color-primary)" : "var(--color-border)"
                 }}
                 className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg border-2 shadow-lg transition-colors duration-300 ${step.id === currentStep || steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep)
-                  ? "text-black"
-                  : "text-white/60"
+                  ? "text-primary-foreground"
+                  : "text-muted-foreground"
                   }`}
               >
                 {steps.indexOf(step) < steps.findIndex((s) => s.id === currentStep) ? (
@@ -212,7 +212,7 @@ export function RegistrationForm() {
               </motion.div>
               <div className="absolute top-14 w-32 text-center">
                 <span
-                  className={`text-xs font-bold uppercase tracking-widest transition-colors duration-300 ${step.id === currentStep ? "text-[#D4AF37]" : "text-white/40"
+                  className={`font-accent transition-colors duration-300 ${step.id === currentStep ? "text-primary" : "text-muted-foreground"
                     }`}
                 >
                   {step.label}
@@ -224,9 +224,9 @@ export function RegistrationForm() {
 
         {/* Connection Lines */}
         <div className="absolute top-6 left-0 w-full px-12 sm:px-16 -z-0">
-          <div className="h-0.5 w-full bg-white/10 rounded-full" />
+          <div className="h-0.5 w-full bg-border/50 rounded-full" />
           <motion.div
-            className="absolute top-0 left-12 sm:left-16 h-0.5 bg-[#D4AF37] rounded-full"
+            className="absolute top-0 left-12 sm:left-16 h-0.5 bg-primary rounded-full"
             initial={false}
             animate={{ width: `${(steps.findIndex((s) => s.id === currentStep) / (steps.length - 1)) * 100}%` }}
             transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -296,13 +296,13 @@ export function RegistrationForm() {
                       onChange={handleInputChange}
                       className={`${inputStyle} appearance-none cursor-pointer`}
                     >
-                      <option value="C180" className="text-black">C180</option>
-                      <option value="C200" className="text-black">C200</option>
-                      <option value="C250" className="text-black">C250</option>
-                      <option value="C300" className="text-black">C300</option>
-                      <option value="C43" className="text-black">C43</option>
+                      <option value="C180" className="text-foreground bg-background">C180</option>
+                      <option value="C200" className="text-foreground bg-background">C200</option>
+                      <option value="C250" className="text-foreground bg-background">C250</option>
+                      <option value="C300" className="text-foreground bg-background">C300</option>
+                      <option value="C43" className="text-foreground bg-background">C43</option>
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
                       <ChevronRight className="w-5 h-5 rotate-90" />
                     </div>
                   </div>
@@ -359,12 +359,12 @@ export function RegistrationForm() {
                       onChange={handleInputChange}
                       className={`${inputStyle} appearance-none cursor-pointer`}
                     >
-                      <option value="Tangerang" className="text-black">Tangerang</option>
-                      <option value="Jakarta" className="text-black">Jakarta</option>
-                      <option value="Bekasi" className="text-black">Bekasi</option>
-                      <option value="Bandung" className="text-black">Bandung</option>
+                      <option value="Tangerang" className="text-foreground bg-background">Tangerang</option>
+                      <option value="Jakarta" className="text-foreground bg-background">Jakarta</option>
+                      <option value="Bekasi" className="text-foreground bg-background">Bekasi</option>
+                      <option value="Bandung" className="text-foreground bg-background">Bandung</option>
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none">
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
                       <ChevronRight className="w-5 h-5 rotate-90" />
                     </div>
                   </div>
@@ -396,11 +396,11 @@ export function RegistrationForm() {
                   Photo with Vehicle <span className="text-red-400">*</span>
                 </label>
                 <div
-                  className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all group ${errors.fotoKendaraan
+                  className={`border-2 border-dashed rounded-sm p-8 text-center cursor-pointer transition-all group ${errors.fotoKendaraan
                     ? "border-red-400 bg-red-400/5"
                     : formData.fotoKendaraan
-                      ? "border-[#D4AF37] bg-[#D4AF37]/5"
-                      : "border-white/20 hover:border-[#D4AF37]/50 hover:bg-white/5"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50 hover:bg-muted/50"
                     }`}
                 >
                   <input
@@ -411,14 +411,14 @@ export function RegistrationForm() {
                     id="photo-upload"
                   />
                   <label htmlFor="photo-upload" className="cursor-pointer block">
-                    <div className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center transition-colors ${formData.fotoKendaraan ? "bg-[#D4AF37]/20 text-[#D4AF37]" : "bg-white/5 text-white/40 group-hover:bg-[#D4AF37]/10 group-hover:text-[#D4AF37]"
+                    <div className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center transition-colors ${formData.fotoKendaraan ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
                       }`}>
                       <Upload className="w-8 h-8" />
                     </div>
-                    <p className="font-medium text-white text-lg">
+                    <p className="font-medium text-foreground text-lg">
                       {formData.fotoKendaraan ? formData.fotoKendaraan.name : "Click to upload or drag and drop"}
                     </p>
-                    <p className="text-sm text-white/40 mt-2">PNG, JPG or WEBP (Max 5MB)</p>
+                    <p className="text-sm text-muted-foreground mt-2">PNG, JPG or WEBP (Max 5MB)</p>
                   </label>
                 </div>
                 {errors.fotoKendaraan && (
@@ -429,15 +429,15 @@ export function RegistrationForm() {
               </div>
 
               {errors.submit && (
-                <div className="bg-red-400/10 border border-red-400 text-red-400 p-4 rounded-lg flex items-start gap-2">
+                <div className="bg-red-400/10 border border-red-400 text-red-400 p-4 rounded-sm flex items-start gap-2">
                   <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
                   <span>{errors.submit}</span>
                 </div>
               )}
 
               {/* Continue Button */}
-              <Button onClick={handleNext} className="w-full bg-[#D4AF37] hover:bg-[#B5952F] text-black py-6 text-lg font-bold shadow-lg shadow-[#D4AF37]/20 transition-all hover:scale-[1.01]">
-                Continue Registration <ChevronRight className="w-5 h-5 ml-2" />
+              <Button onClick={handleNext} className="w-full bg-metallic-gold text-primary-foreground py-7 text-lg font-bold shadow-lg rounded-sm transition-all hover:scale-[1.02] border-0">
+                CONTINUE REGISTRATION <ChevronRight className="w-5 h-5 ml-2" />
               </Button>
             </motion.div>
           )}
@@ -449,62 +449,62 @@ export function RegistrationForm() {
               </h2>
 
               <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                <div className="flex gap-4 items-start p-4 rounded-lg bg-white/5 border border-white/10">
-                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-[#D4AF37] font-bold">1</span>
+                <div className="flex gap-4 items-start p-4 rounded-sm bg-card/50 border border-border/50">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-primary font-bold">1</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-serif font-bold text-white mb-2 text-lg">General Requirements</p>
-                    <ul className="space-y-2 text-white/70">
-                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Owner and user of Mercedes-Benz W 205 (C-Class).</li>
-                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Minimum age 17 years or active driver's license.</li>
-                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Willing to follow AD/ART and community rules.</li>
+                    <p className="font-sans font-bold text-foreground mb-2 text-lg tracking-wide">General Requirements</p>
+                    <ul className="space-y-2 text-muted-foreground font-light">
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" /> Owner and user of Mercedes-Benz W 205 (C-Class).</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" /> Minimum age 17 years or active driver's license.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" /> Willing to follow AD/ART and community rules.</li>
                     </ul>
                   </div>
                 </div>
 
-                <div className="flex gap-4 items-start p-4 rounded-lg bg-white/5 border border-white/10">
-                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-[#D4AF37] font-bold">2</span>
+                <div className="flex gap-4 items-start p-4 rounded-sm bg-card/50 border border-border/50">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-primary font-bold">2</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-serif font-bold text-white mb-2 text-lg">Administration</p>
-                    <ul className="space-y-2 text-white/70">
-                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Fill out Member Registration Form.</li>
-                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Provide KTP and STNK copy.</li>
-                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Pay registration and annual fees.</li>
+                    <p className="font-sans font-bold text-foreground mb-2 text-lg tracking-wide">Administration</p>
+                    <ul className="space-y-2 text-muted-foreground font-light">
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" /> Fill out Member Registration Form.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" /> Provide KTP and STNK copy.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" /> Pay registration and annual fees.</li>
                     </ul>
                   </div>
                 </div>
 
-                <div className="flex gap-4 items-start p-4 rounded-lg bg-white/5 border border-white/10">
-                  <div className="w-8 h-8 rounded-full bg-[#D4AF37]/20 flex items-center justify-center flex-shrink-0 mt-1">
-                    <span className="text-[#D4AF37] font-bold">3</span>
+                <div className="flex gap-4 items-start p-4 rounded-sm bg-card/50 border border-border/50">
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-1">
+                    <span className="text-primary font-bold">3</span>
                   </div>
                   <div className="flex-1">
-                    <p className="font-serif font-bold text-white mb-2 text-lg">Mandatory Activities</p>
-                    <ul className="space-y-2 text-white/70">
-                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Join at least 2 SOTR events.</li>
-                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Join at least 1 touring event.</li>
-                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] mt-2 flex-shrink-0" /> Active participation in official events.</li>
+                    <p className="font-sans font-bold text-foreground mb-2 text-lg tracking-wide">Mandatory Activities</p>
+                    <ul className="space-y-2 text-muted-foreground font-light">
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" /> Join at least 2 SOTR events.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" /> Join at least 1 touring event.</li>
+                      <li className="flex items-start gap-2"><div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" /> Active participation in official events.</li>
                     </ul>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/20">
-                  <p className="text-[#D4AF37] text-sm text-center italic">By continuing, you acknowledge that you have read and agreed to these requirements.</p>
+                <div className="p-4 rounded-sm bg-primary/10 border border-primary/20">
+                  <p className="text-primary text-sm text-center italic tracking-wide">By continuing, you acknowledge that you have read and agreed to these requirements.</p>
                 </div>
               </div>
 
               <div className="flex gap-4 pt-4">
-                <Button onClick={() => setCurrentStep("registration")} variant="outline" className="flex-1 border-white/20 text-white hover:bg-white/10 py-6">
+                <Button onClick={() => setCurrentStep("registration")} variant="outline" className="flex-1 border-border/50 bg-background text-foreground hover:bg-muted py-7 rounded-sm transition-all hover:scale-[1.02]">
                   Back
                 </Button>
                 <Button
                   onClick={() => setCurrentStep("inauguration")}
-                  className="flex-1 bg-[#D4AF37] hover:bg-[#B5952F] text-black py-6 text-lg font-bold shadow-lg"
+                  className="flex-1 bg-metallic-gold text-primary-foreground py-7 text-lg font-bold shadow-lg rounded-sm transition-all hover:scale-[1.02] border-0"
                 >
-                  I Agree & Continue
+                  I AGREE & CONTINUE
                 </Button>
               </div>
             </motion.div>
@@ -515,46 +515,46 @@ export function RegistrationForm() {
               <h2 className={headingStyle}>Inauguration Journey</h2>
 
               <div className="relative">
-                <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#D4AF37] via-white/20 to-transparent" />
+                <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary via-border/50 to-transparent" />
 
                 <div className="space-y-8 relative">
                   <div className="flex gap-6 items-center group">
-                    <div className="w-16 h-16 rounded-full bg-[#0f0f0f] border-2 border-[#D4AF37] flex items-center justify-center flex-shrink-0 z-10 shadow-[0_0_15px_rgba(212,175,55,0.3)]">
-                      <span className="text-xl font-bold text-[#D4AF37]">1</span>
+                    <div className="w-16 h-16 rounded-full bg-background border-2 border-primary flex items-center justify-center flex-shrink-0 z-10 shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+                      <span className="text-xl font-bold text-primary">1</span>
                     </div>
-                    <div className="bg-white/5 p-4 rounded-lg border border-white/10 flex-1 group-hover:border-[#D4AF37]/30 transition-colors">
-                      <h3 className="text-lg font-bold text-white">Application Review</h3>
-                      <p className="text-white/60 text-sm">Our team will review your submission within 3-5 business days.</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-6 items-center group">
-                    <div className="w-16 h-16 rounded-full bg-[#0f0f0f] border-2 border-white/20 flex items-center justify-center flex-shrink-0 z-10 bg-[#0f0f0f]">
-                      <span className="text-xl font-bold text-white/40">2</span>
-                    </div>
-                    <div className="bg-white/5 p-4 rounded-lg border border-white/10 flex-1">
-                      <h3 className="text-lg font-bold text-white">Verification</h3>
-                      <p className="text-white/60 text-sm">We verify your vehicle details and personal information.</p>
+                    <div className="bg-card/50 p-6 rounded-sm border border-border/50 flex-1 group-hover:border-primary/30 transition-colors">
+                      <h3 className="text-lg font-sans font-bold text-foreground tracking-wide">Application Review</h3>
+                      <p className="text-muted-foreground text-sm font-light mt-1">Our team will review your submission within 3-5 business days.</p>
                     </div>
                   </div>
 
                   <div className="flex gap-6 items-center group">
-                    <div className="w-16 h-16 rounded-full bg-[#0f0f0f] border-2 border-white/20 flex items-center justify-center flex-shrink-0 z-10 bg-[#0f0f0f]">
-                      <span className="text-xl font-bold text-white/40">3</span>
+                    <div className="w-16 h-16 rounded-full bg-background border-2 border-border/50 flex items-center justify-center flex-shrink-0 z-10">
+                      <span className="text-xl font-bold text-muted-foreground/50">2</span>
                     </div>
-                    <div className="bg-white/5 p-4 rounded-lg border border-white/10 flex-1">
-                      <h3 className="text-lg font-bold text-white">Welcome Event</h3>
-                      <p className="text-white/60 text-sm">Join us at the next gathering to meet the family.</p>
+                    <div className="bg-card/50 p-6 rounded-sm border border-border/50 flex-1 group-hover:border-primary/30 transition-colors">
+                      <h3 className="text-lg font-sans font-bold text-foreground tracking-wide">Verification</h3>
+                      <p className="text-muted-foreground text-sm font-light mt-1">We verify your vehicle details and personal information.</p>
                     </div>
                   </div>
 
                   <div className="flex gap-6 items-center group">
-                    <div className="w-16 h-16 rounded-full bg-[#0f0f0f] border-2 border-white/20 flex items-center justify-center flex-shrink-0 z-10 bg-[#0f0f0f]">
-                      <span className="text-xl font-bold text-white/40">4</span>
+                    <div className="w-16 h-16 rounded-full bg-background border-2 border-border/50 flex items-center justify-center flex-shrink-0 z-10">
+                      <span className="text-xl font-bold text-muted-foreground/50">3</span>
                     </div>
-                    <div className="bg-white/5 p-4 rounded-lg border border-white/10 flex-1">
-                      <h3 className="text-lg font-bold text-white">Official Member</h3>
-                      <p className="text-white/60 text-sm">Receive your official ID and starter kit.</p>
+                    <div className="bg-card/50 p-6 rounded-sm border border-border/50 flex-1 group-hover:border-primary/30 transition-colors">
+                      <h3 className="text-lg font-sans font-bold text-foreground tracking-wide">Welcome Event</h3>
+                      <p className="text-muted-foreground text-sm font-light mt-1">Join us at the next gathering to meet the family.</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-6 items-center group">
+                    <div className="w-16 h-16 rounded-full bg-background border-2 border-border/50 flex items-center justify-center flex-shrink-0 z-10">
+                      <span className="text-xl font-bold text-muted-foreground/50">4</span>
+                    </div>
+                    <div className="bg-card/50 p-6 rounded-sm border border-border/50 flex-1 group-hover:border-primary/30 transition-colors">
+                      <h3 className="text-lg font-sans font-bold text-foreground tracking-wide">Official Member</h3>
+                      <p className="text-muted-foreground text-sm font-light mt-1">Receive your official ID and starter kit.</p>
                     </div>
                   </div>
                 </div>
@@ -568,25 +568,25 @@ export function RegistrationForm() {
               )}
 
               <div className="flex gap-4 pt-8">
-                <Button onClick={() => setCurrentStep("requirements")} variant="outline" className="flex-1 border-white/20 text-white hover:bg-white/10 py-6">
+                <Button onClick={() => setCurrentStep("requirements")} variant="outline" className="flex-1 border-border/50 bg-background text-foreground hover:bg-muted py-7 rounded-sm transition-all hover:scale-[1.02]">
                   Back
                 </Button>
                 <Button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
-                  className="flex-1 bg-[#D4AF37] hover:bg-[#B5952F] text-black py-6 text-lg font-bold shadow-lg"
+                  className="flex-1 bg-metallic-gold text-primary-foreground py-7 text-lg font-bold shadow-lg rounded-sm transition-all hover:scale-[1.02] border-0"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                        className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full"
+                        className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full"
                       />
-                      Submitting...
+                      SUBMITTING...
                     </span>
                   ) : (
-                    "Submit Application"
+                    "SUBMIT APPLICATION"
                   )}
                 </Button>
               </div>
@@ -599,24 +599,24 @@ export function RegistrationForm() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                className="w-24 h-24 bg-[#D4AF37] rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(212,175,55,0.5)]"
+                className="w-24 h-24 bg-primary rounded-full flex items-center justify-center mx-auto shadow-[0_0_30px_rgba(255,255,255,0.1)]"
               >
-                <Check className="w-12 h-12 text-black" />
+                <Check className="w-12 h-12 text-primary-foreground" />
               </motion.div>
 
               <div className="space-y-4">
-                <h2 className="text-4xl font-serif font-bold text-white">Application Received</h2>
-                <p className="text-white/70 max-w-md mx-auto text-lg leading-relaxed">
-                  Thank you for applying to the <span className="text-[#D4AF37] font-semibold">Mercedes-Benz W205CI Club Indonesia</span>.
+                <h2 className="text-4xl font-sans font-bold text-foreground">Application Received</h2>
+                <p className="text-muted-foreground max-w-md mx-auto text-lg leading-relaxed font-light">
+                  Thank you for applying to the <span className="text-primary font-semibold">Mercedes-Benz W205CI Club Indonesia</span>.
                 </p>
-                <div className="p-4 bg-white/5 rounded-lg max-w-sm mx-auto border border-white/10">
-                  <p className="text-white/60 text-sm">We will contact you via email or WhatsApp within 3-5 business days regarding the next steps.</p>
+                <div className="p-4 bg-card/50 rounded-sm max-w-sm mx-auto border border-border/50">
+                  <p className="text-muted-foreground text-sm font-light">We will contact you via email or WhatsApp within 3-5 business days regarding the next steps.</p>
                 </div>
               </div>
 
               <Button
                 onClick={() => (window.location.href = "/")}
-                className="bg-white/10 hover:bg-white/20 text-white px-8 py-3 rounded-full border border-white/20 backdrop-blur-sm transition-all hover:scale-105"
+                className="bg-card/50 hover:bg-muted text-foreground px-10 py-6 text-base tracking-wide rounded-sm border border-border/50 backdrop-blur-sm transition-all hover:scale-105"
               >
                 Return to Home
               </Button>

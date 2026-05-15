@@ -83,37 +83,37 @@ export function Footer() {
   }
 
   return (
-    <footer className="bg-gray-900 text-white py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+    <footer className="bg-background border-t border-border/20 text-foreground py-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="text-2xl font-bold">{logo.text}</h3>
-              <div className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center">
-                <div className="w-2 h-2 bg-white rounded-full"></div>
+            <div className="flex items-center gap-3 mb-4">
+              <h3 className="text-2xl font-sans font-bold tracking-widest text-primary">{logo.text}</h3>
+              <div className="w-6 h-6 rounded-full border border-primary/50 flex items-center justify-center">
+                <div className="w-1.5 h-1.5 bg-primary rounded-full"></div>
               </div>
             </div>
-            <p className="text-gray-400 text-sm">{logo.subtext}</p>
-            <p className="text-gray-500 text-sm mt-4">{footerConfig.description}</p>
+            <p className="text-muted-foreground text-xs uppercase tracking-[0.2em] mb-4">{logo.subtext}</p>
+            <p className="text-muted-foreground/80 text-sm font-light leading-relaxed">{footerConfig.description}</p>
           </div>
 
           {/* Navigation */}
           <div>
-            <h4 className="font-semibold mb-6 text-white">About Us</h4>
-            <ul className="space-y-3">
+            <h4 className="font-semibold mb-6 text-foreground tracking-wide">About Us</h4>
+            <ul className="space-y-4">
               <li>
-                <Link href="#about" className="text-gray-400 hover:text-white transition text-sm">
+                <Link href="#about" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="#events" className="text-gray-400 hover:text-white transition text-sm">
+                <Link href="#events" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                   Events
                 </Link>
               </li>
               <li>
-                <Link href="#membership" className="text-gray-400 hover:text-white transition text-sm">
+                <Link href="#membership" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                   Membership
                 </Link>
               </li>
@@ -122,15 +122,15 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold mb-6 text-white">Contact</h4>
-            <p className="text-gray-400 text-sm mb-2">{footerConfig.address}</p>
-            <p className="text-gray-400 text-sm mb-2">{footerConfig.email}</p>
-            <p className="text-gray-400 text-sm">{footerConfig.phone}</p>
+            <h4 className="font-semibold mb-6 text-foreground tracking-wide">Contact</h4>
+            <p className="text-muted-foreground text-sm mb-3 font-light">{footerConfig.address}</p>
+            <p className="text-muted-foreground text-sm mb-3 font-light hover:text-primary transition-colors"><a href={`mailto:${footerConfig.email}`}>{footerConfig.email}</a></p>
+            <p className="text-muted-foreground text-sm font-light">{footerConfig.phone}</p>
           </div>
 
           {/* Social Media */}
           <div>
-            <h4 className="font-semibold mb-6 text-white">Follow Us</h4>
+            <h4 className="font-semibold mb-6 text-foreground tracking-wide">Follow Us</h4>
             <div className="flex gap-4">
               {socialLinks.map((social) => (
                 <a
@@ -138,7 +138,7 @@ export function Footer() {
                   href={social.url || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-gray-400 hover:text-white transition"
+                  className="text-muted-foreground hover:text-primary transition-colors"
                   aria-label={social.platform}
                 >
                   {getIcon(social.platform)}
@@ -149,15 +149,15 @@ export function Footer() {
         </div>
 
         {/* Divider */}
-        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-center md:text-left text-gray-500 text-sm">
+        <div className="border-t border-border/20 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-center md:text-left text-muted-foreground/70 text-xs font-light tracking-wide">
             © {footerConfig.copyright_year} {footerConfig.copyright_text}
           </p>
           <div className="flex gap-6">
-            <Link href="#" className="text-gray-500 hover:text-white transition text-sm">
+            <Link href="#" className="text-muted-foreground/70 hover:text-primary transition-colors text-xs tracking-wide">
               Privacy Policy
             </Link>
-            <Link href="#" className="text-gray-500 hover:text-white transition text-sm">
+            <Link href="#" className="text-muted-foreground/70 hover:text-primary transition-colors text-xs tracking-wide">
               Terms of Service
             </Link>
           </div>

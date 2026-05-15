@@ -1141,7 +1141,7 @@ export function AdminDashboard() {
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
               <motion.div {...fadeIn}>
-                <h1 className="text-3xl font-serif font-bold text-foreground mb-6">{t("dashboardOverview")}</h1>
+                <h1 className="text-3xl font-sans font-bold text-foreground mb-6">{t("dashboardOverview")}</h1>
 
                 <Card className={`p-6 ${glassCard} mb-6`}>
                   <div className="flex flex-col md:flex-row gap-4 items-end">
@@ -1188,19 +1188,19 @@ export function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-2">
                   <Card className={`p-6 ${glassCard} hover:scale-[1.02] transition-transform duration-300 group`}>
                     <p className="text-foreground/60 text-sm mb-2 uppercase tracking-wider">{t("totalMembers")}</p>
-                    <p className="text-4xl font-serif font-bold text-primary group-hover:text-primary/80 transition-colors">{stats.totalMembers}</p>
+                    <p className="text-4xl font-sans font-bold text-primary group-hover:text-primary/80 transition-colors">{stats.totalMembers}</p>
                   </Card>
                   <Card className={`p-6 ${glassCard} hover:scale-[1.02] transition-transform duration-300 group`}>
                     <p className="text-foreground/60 text-sm mb-2 uppercase tracking-wider">{t("pendingApprovals")}</p>
-                    <p className="text-4xl font-serif font-bold text-accent group-hover:text-accent/80 transition-colors">{stats.pendingApprovals}</p>
+                    <p className="text-4xl font-sans font-bold text-accent group-hover:text-accent/80 transition-colors">{stats.pendingApprovals}</p>
                   </Card>
                   <Card className={`p-6 ${glassCard} hover:scale-[1.02] transition-transform duration-300 group`}>
                     <p className="text-foreground/60 text-sm mb-2 uppercase tracking-wider">{t("approvedMembers")}</p>
-                    <p className="text-4xl font-serif font-bold text-emerald-600 group-hover:text-emerald-500 transition-colors">{stats.approvedMembers}</p>
+                    <p className="text-4xl font-sans font-bold text-emerald-600 group-hover:text-emerald-500 transition-colors">{stats.approvedMembers}</p>
                   </Card>
                   <Card className={`p-6 ${glassCard} hover:scale-[1.02] transition-transform duration-300 group`}>
                     <p className="text-foreground/60 text-sm mb-2 uppercase tracking-wider">{t("totalEvents")}</p>
-                    <p className="text-4xl font-serif font-bold text-blue-600 group-hover:text-blue-500 transition-colors">{stats.totalEvents}</p>
+                    <p className="text-4xl font-sans font-bold text-blue-600 group-hover:text-blue-500 transition-colors">{stats.totalEvents}</p>
                   </Card>
                 </div>
 
@@ -1245,7 +1245,7 @@ export function AdminDashboard() {
             <TabsContent value="members" className="space-y-6">
               <motion.div {...fadeIn}>
                 <div className="flex items-center justify-between mb-6">
-                  <h1 className="text-3xl font-serif font-bold text-foreground">{t("memberManagement")}</h1>
+                  <h1 className="text-3xl font-sans font-bold text-foreground">{t("memberManagement")}</h1>
                   <Button onClick={exportToCSV} className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20">
                     <Download className="w-4 h-4 mr-2" />
                     {t("exportCSV")}
@@ -1464,7 +1464,7 @@ export function AdminDashboard() {
             <TabsContent value="registrations" className="space-y-6">
               <motion.div {...fadeIn}>
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
-                  <h1 className="text-3xl font-serif font-bold text-foreground">Event Registrations</h1>
+                  <h1 className="text-3xl font-sans font-bold text-foreground">Event Registrations</h1>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={exportRegistrationsToCSV}
@@ -1574,7 +1574,7 @@ export function AdminDashboard() {
             < TabsContent value="messages" className="space-y-6" >
               <motion.div {...fadeIn}>
                 <div className="flex items-center justify-between mb-6">
-                  <h1 className="text-3xl font-serif font-bold text-foreground">{t("contactMessages")}</h1>
+                  <h1 className="text-3xl font-sans font-bold text-foreground">{t("contactMessages")}</h1>
                 </div>
 
                 <Card className={`p-6 ${glassCard} mb-6`}>
@@ -1673,7 +1673,7 @@ export function AdminDashboard() {
             <TabsContent value="events" className="space-y-6">
               <motion.div {...fadeIn}>
                 <div className="flex items-center justify-between mb-6">
-                  <h1 className="text-3xl font-serif font-bold text-foreground">Events Management</h1>
+                  <h1 className="text-3xl font-sans font-bold text-foreground">Events Management</h1>
                   <Button
                     onClick={() => setShowNewEventForm(!showNewEventForm)}
                     className="bg-primary hover:bg-primary/90 text-white"
@@ -1966,7 +1966,7 @@ export function AdminDashboard() {
             {/* Gallery Tab (NEW) */}
             < TabsContent value="gallery" className="space-y-6" >
               <motion.div {...fadeIn}>
-                <h1 className="text-3xl font-serif font-bold text-foreground mb-6">{t("imageGallery")}</h1>
+                <h1 className="text-3xl font-sans font-bold text-foreground mb-6">{t("imageGallery")}</h1>
 
                 <Card className={`p-6 ${glassCard} mb-6`}>
                   <div
@@ -2053,7 +2053,7 @@ export function AdminDashboard() {
             {/* Content Tab */}
             <TabsContent value="content" className="space-y-6">
               <motion.div {...fadeIn}>
-                <h1 className="text-3xl font-serif font-bold text-foreground mb-6">Content Management</h1>
+                <h1 className="text-3xl font-sans font-bold text-foreground mb-6">Content Management</h1>
 
 
 
@@ -2473,7 +2473,7 @@ export function AdminDashboard() {
             {/* Settings Tab */}
             <TabsContent value="settings" className="space-y-6">
               <motion.div {...fadeIn}>
-                <h1 className="text-3xl font-serif font-bold text-foreground mb-6">Settings</h1>
+                <h1 className="text-3xl font-sans font-bold text-foreground mb-6">Settings</h1>
 
                 {/* Social Media Links */}
                 <Card className={`p-6 ${glassCard} mb-6`}>

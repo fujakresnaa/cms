@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 
 interface AboutContent {
   title: string
@@ -40,29 +41,41 @@ export function AboutSection() {
   }, [])
 
   return (
-    <section id="about" className="py-24 px-4 sm:px-6 lg:px-8 bg-white">
-      <div className="max-w-5xl mx-auto">
-        <div className="text-center mb-12">
+    <section id="about" className="py-32 px-4 sm:px-6 lg:px-8 bg-background relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-32 bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
+
+      <div className="max-w-5xl mx-auto relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
+        >
           {/* Badge */}
-          <div className="inline-block mb-6">
-            <span className="text-xs font-semibold text-gray-600 tracking-widest">● ABOUT US</span>
+          <div className="inline-block mb-4">
+            <span className="font-accent text-primary">● ABOUT MBW205CI</span>
           </div>
 
           {/* Heading */}
-          <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-10 leading-tight text-pretty">
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-sans font-bold text-foreground mb-10 leading-tight text-pretty tracking-tight">
             {about.title}
           </h2>
 
           {/* Description */}
-          <p className="text-lg text-gray-600 mb-10 leading-relaxed max-w-3xl mx-auto whitespace-pre-wrap">{about.description}</p>
+          <p className="text-lg md:text-xl text-muted-foreground mb-12 leading-relaxed max-w-3xl mx-auto whitespace-pre-wrap font-light">
+            {about.description}
+          </p>
 
           {/* CTA Button */}
           <Link href="#events">
-            <Button className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3 text-base">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-6 text-base tracking-wide rounded-sm transition-all hover:scale-105">
               {about.button_text}
             </Button>
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

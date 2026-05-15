@@ -68,7 +68,7 @@ export function AdminLoginForm() {
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.2 }}
               >
-                <h1 className="text-4xl font-serif font-bold text-white tracking-tight">MBW205CI</h1>
+                <h1 className="text-4xl font-sans font-bold text-white tracking-tight">MBW205CI</h1>
                 <p className="text-gray-300 font-light tracking-widest text-sm uppercase mt-1">Admin Portal</p>
               </motion.div>
             </div>
