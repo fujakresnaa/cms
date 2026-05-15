@@ -16,6 +16,7 @@ interface ShowcaseItem {
 export function ShowcaseSection() {
   const [showcase, setShowcase] = useState<ShowcaseItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [selectedIndex, setSelectedIndex] = useState(0)
 
   const [emblaRef, emblaApi] = useEmblaCarousel(
     {
@@ -32,6 +33,18 @@ export function ShowcaseSection() {
       })
     ]
   )
+
+  const onSelect = useCallback(() => {
+    if (!emblaApi) return
+    setSelectedIndex(emblaApi.selectedScrollSnap())
+  }, [emblaApi])
+
+  useEffect(() => {
+    if (!emblaApi) return
+    onSelect()
+    emblaApi.on("select", onSelect)
+    emblaApi.on("reInit", onSelect)
+  }, [emblaApi, onSelect])
 
   const scrollPrev = useCallback(() => {
     if (emblaApi) {
@@ -136,26 +149,62 @@ export function ShowcaseSection() {
         </motion.div>
 
         {/* Carousel */}
-        <div className="relative">
-          <div className="overflow-hidden" ref={emblaRef}>
+        <div className="relative pt-10 pb-24">
+          <div className="overflow-visible" ref={emblaRef}>
             <div className="flex -ml-4">
-              {showcase.map((item) => (
-                <div
-                  key={item.id}
-                  className="pl-4 flex-[0_0_90%] min-w-0 sm:flex-[0_0_60%] md:flex-[0_0_50%] lg:flex-[0_0_40%]"
-                >
-                  <div className="relative aspect-[4/3] overflow-hidden rounded-sm shadow-2xl group cursor-pointer border border-primary/20">
-                    <img
-                      src={item.image_url || "/placeholder.svg"}
-                      alt={item.title || "Showcase vehicle"}
-                      className="w-full h-full object-cover will-change-transform transform group-hover:scale-110 transition-transform duration-1000 ease-out"
-                      onError={(e) => {
-                        e.currentTarget.src = "/placeholder.svg"
+              {showcase.map((item, index) => {
+                const isSelected = selectedIndex === index;
+                return (
+                  <div
+                    key={item.id}
+                    className="pl-4 flex-[0_0_85%] min-w-0 sm:flex-[0_0_65%] md:flex-[0_0_55%] lg:flex-[0_0_48%] relative"
+                  >
+                    <motion.div
+                      animate={{
+                        scale: isSelected ? 1.15 : 0.85,
+                        zIndex: isSelected ? 10 : 1,
                       }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20,
+                        mass: 1,
+                      }}
+                      className={`relative aspect-[16/10] overflow-hidden rounded-sm group cursor-pointer ${
+                        isSelected ? 'shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8),0_20px_40px_-15px_rgba(212,175,55,0.2)]' : 'shadow-none'
+                      }`}
+                    >
+                      <img
+                        src={item.image_url || "/placeholder.svg"}
+                        alt={item.title || "Showcase vehicle"}
+                        className="w-full h-full object-cover will-change-transform transform group-hover:scale-110 transition-transform duration-1000 ease-out"
+                        onError={(e) => {
+                          e.currentTarget.src = "/placeholder.svg"
+                        }}
+                      />
+                      {/* Inner edge glow for premium feel */}
+                      <div className="absolute inset-0 pointer-events-none border border-white/5" />
+                    </motion.div>
+                    
+                    {/* Floor Shadow / Reflection Effect */}
+                    <motion.div 
+                      animate={{ 
+                        opacity: isSelected ? 0.8 : 0.3,
+                        scaleX: isSelected ? 1.1 : 0.9,
+                        y: isSelected ? 35 : 20
+                      }}
+                      className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[85%] h-6 bg-primary/40 blur-3xl rounded-full pointer-events-none"
+                    />
+                    <motion.div 
+                      animate={{ 
+                        opacity: isSelected ? 1 : 0.5,
+                        y: isSelected ? 40 : 25
+                      }}
+                      className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[95%] h-8 bg-black/90 blur-3xl rounded-full pointer-events-none" 
                     />
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
