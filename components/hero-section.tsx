@@ -135,7 +135,7 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-black/40 z-10" />
         <img
           src={heroData.background_image_url || "/images/MercedesBenz.jpg"}
-          alt="Mercedes-Benz W205"
+          alt="Mercedes-Benz W205 Club Indonesia - Komunitas Resmi Mercy W205"
           className="h-full w-full object-cover opacity-80"
         />
       </motion.div>

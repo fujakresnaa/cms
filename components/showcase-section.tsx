@@ -52,19 +52,19 @@ export function ShowcaseSection() {
   const staticCars = [
     {
       image: "/car-club-members-meeting-luxury.jpg",
-      alt: "Mercedes W205CI Meeting",
+      alt: "Pertemuan Member Mercedes-Benz W205CI Club Indonesia",
     },
     {
       image: "/placeholder.jpg",
-      alt: "Dark Blue Mercedes W205CI",
+      alt: "Modifikasi Mewah Mercedes-Benz W205 C-Class",
     },
     {
       image: "/car-club-members-meeting-luxury.jpg",
-      alt: "White Mercedes W205CI",
+      alt: "Gathering Komunitas Mercy W205 Indonesia",
     },
     {
       image: "/placeholder.jpg",
-      alt: "Dark Mercedes W205CI Night",
+      alt: "Malam Kebersamaan Night Drive W205CI Indonesia",
     },
   ]
 
