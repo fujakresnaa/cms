@@ -58,30 +58,29 @@ export function AboutSection() {
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,_rgba(212,175,55,0.05)_0%,_transparent_50%)]"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_70%,_rgba(212,175,55,0.05)_0%,_transparent_50%)]"></div>
       
-      {/* Technical Grid Pattern */}
-      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
+      {/* Technical Grid Pattern - Optimized with translate-z-0 */}
+      <div className="absolute inset-0 opacity-[0.03] pointer-events-none translate-z-0" style={{ backgroundImage: 'radial-gradient(var(--primary) 1px, transparent 0)', backgroundSize: '40px 40px' }}></div>
 
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent"></div>
       
-      {/* Floating Abstract Shapes */}
+      {/* Floating Abstract Shapes - Optimized with will-change-transform */}
       <motion.div 
         animate={{ y: [0, -20, 0], rotate: [0, 10, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute top-20 -left-20 w-64 h-64 border border-primary/10 rounded-full -z-0 opacity-20"
+        className="absolute top-20 -left-20 w-64 h-64 border border-primary/5 rounded-full -z-0 opacity-10 will-change-transform"
       />
       <motion.div 
         animate={{ y: [0, 20, 0], rotate: [0, -10, 0] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-20 -right-20 w-80 h-80 border border-primary/10 rounded-full -z-0 opacity-20"
+        className="absolute bottom-20 -right-20 w-80 h-80 border border-primary/5 rounded-full -z-0 opacity-10 will-change-transform"
       />
 
-      {/* Geometric Abstract Graphics */}
-      <svg className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-[0.05]" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <path d="M0,50 L100,50 M50,0 L50,100" stroke="var(--primary)" strokeWidth="0.1" fill="none" />
-        <circle cx="20" cy="30" r="15" stroke="var(--primary)" strokeWidth="0.05" fill="none" />
-        <circle cx="80" cy="70" r="20" stroke="var(--primary)" strokeWidth="0.05" fill="none" />
-        <path d="M0,0 L100,100 M100,0 L0,100" stroke="var(--primary)" strokeWidth="0.03" fill="none" />
+      {/* Geometric Abstract Graphics - Simplified for better scroll performance */}
+      <svg className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-[0.03]" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path d="M0,50 L100,50" stroke="var(--primary)" strokeWidth="0.05" fill="none" />
+        <circle cx="20" cy="30" r="10" stroke="var(--primary)" strokeWidth="0.05" fill="none" />
+        <circle cx="80" cy="70" r="15" stroke="var(--primary)" strokeWidth="0.05" fill="none" />
       </svg>
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -93,17 +92,18 @@ export function AboutSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative order-2 lg:order-1"
+            className="relative order-2 lg:order-1 will-change-transform"
           >
             {/* Background Decorative Frame */}
             <div className="absolute -inset-4 border border-primary/10 -z-10 translate-x-4 translate-y-4"></div>
             
             {/* Image 1 (Bottom Stack) */}
-            <div className="relative z-0 w-4/5 ml-auto overflow-hidden rounded-sm border border-white/5 shadow-2xl aspect-[4/5]">
+            <div className="relative z-0 w-4/5 ml-auto overflow-hidden rounded-sm border border-white/5 shadow-2xl aspect-[4/5] bg-secondary/10">
               <Image 
                 src={about.image_url_2 || "/luxury-car-steering-wheel-dashboard-premium-interi.jpg"} 
                 alt="About W205CI 1" 
                 fill
+                sizes="(max-width: 1024px) 80vw, 40vw"
                 className="object-cover opacity-60 grayscale hover:grayscale-0 transition-all duration-700"
               />
             </div>
@@ -114,20 +114,21 @@ export function AboutSection() {
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3, duration: 0.8 }}
-              className="absolute top-1/4 left-0 z-10 w-3/4 aspect-[4/5] overflow-hidden rounded-sm border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+              className="absolute top-1/4 left-0 z-10 w-3/4 aspect-[4/5] overflow-hidden rounded-sm border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-secondary/20 will-change-transform"
             >
               <Image 
                 src={about.image_url_1 || "/car-club-members-meeting-luxury.jpg"} 
                 alt="About W205CI 2" 
                 fill
+                sizes="(max-width: 1024px) 75vw, 35vw"
                 className="object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
             </motion.div>
 
-            {/* Floating Detail */}
-            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 backdrop-blur-xl border border-primary/20 rounded-full flex items-center justify-center -z-10 animate-pulse">
-              <div className="w-24 h-24 border border-primary/30 rounded-full border-dashed"></div>
+            {/* Floating Detail - Optimized (Removed backdrop-blur) */}
+            <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-primary/10 border border-primary/20 rounded-full flex items-center justify-center -z-10 animate-pulse">
+              <div className="w-24 h-24 border border-primary/20 rounded-full border-dashed"></div>
             </div>
           </motion.div>
 
@@ -137,7 +138,7 @@ export function AboutSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="text-left order-1 lg:order-2"
+            className="text-left order-1 lg:order-2 will-change-transform"
           >
             {/* Badge */}
             <div className="inline-block mb-6">
