@@ -114,14 +114,14 @@ export function AboutSection() {
               whileInView={{ y: 0, opacity: 1 }}
               viewport={{ once: true }}
               transition={{ delay: 0.3, duration: 0.8 }}
-              className="absolute top-1/4 left-0 z-10 w-3/4 aspect-[4/5] overflow-hidden rounded-sm border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-secondary/20 will-change-transform"
+              className="absolute top-1/4 left-0 z-10 w-3/4 aspect-[4/5] overflow-hidden rounded-sm border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] bg-secondary/20 will-change-transform group"
             >
               <Image 
                 src={about.image_url_1 || "/car-club-members-meeting-luxury.jpg"} 
                 alt="About W205CI 2" 
                 fill
                 sizes="(max-width: 1024px) 75vw, 35vw"
-                className="object-cover"
+                className="object-cover transition-transform duration-[2s] group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
             </motion.div>
