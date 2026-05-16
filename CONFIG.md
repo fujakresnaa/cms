@@ -7,8 +7,7 @@ This document explains the environment variables and configuration used in the p
 | Variable | Description | Required | Example |
 |----------|-------------|----------|---------|
 | `DATABASE_URL` | Connection string for the PostgreSQL database. | **Yes** | `postgresql://user:pass@host:5432/db` |
-| `NEXT_PUBLIC_SUPABASE_URL` | URL of your Supabase project (used for Storage/Auth). | **Yes** | `https://xyz.supabase.co` |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anonymous key for Supabase client. | **Yes** | `eyJ...` |
+
 | `NODE_ENV` | Environment mode (`development` or `production`). | No | `production` |
 
 ## Database Configuration
@@ -30,7 +29,5 @@ The `docker-compose.yml` sets up:
 **Volumes:**
 - `postgres_data`: Persists database files.
 
-## External Services
-
-### Supabase
-Used strictly for **File Storage** (Gallery images) and potentially Auth integration on the client side. The main application data lives in your own Postgres database.
+### Local Storage
+Used for Gallery images and file uploads. Files are stored in the `public/uploads` directory.

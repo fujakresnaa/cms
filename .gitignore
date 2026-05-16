@@ -2,6 +2,8 @@
 
 # dependencies
 /node_modules
+.DS_Store
+**/.DS_Store
 
 # next.js
 /.next/
@@ -25,7 +27,6 @@ yarn-error.log*
 
 # git
 .env
-.env.local
-.env.production
-.env.example
+.env.*
+!.env.example
 

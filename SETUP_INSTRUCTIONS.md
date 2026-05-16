@@ -8,7 +8,7 @@ Create `.env` file (or `.env.local` for local dev overriding defaults) with the 
 
 ```env
 # Database Configuration (PostgreSQL)
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/mrc_cms"
+DATABASE_URL="postgresql://fuja:password@localhost:5432/cms_mercy"
 
 # Node Environment
 NODE_ENV=production
