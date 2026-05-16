@@ -46,13 +46,15 @@ export async function PUT(request: NextRequest) {
 
     const updateData = {
       title: body.title,
+      subtitle: body.subtitle,
       description: body.description,
+      image_url: body.image_url,
       stats: JSON.stringify(body.stats),
     }
 
     const { rows } = await pool.query(
-      "UPDATE cms_membership SET title = $1, description = $2, stats = $3 WHERE id = $4 RETURNING *",
-      [updateData.title, updateData.description, updateData.stats, body.id]
+      "UPDATE cms_membership SET title = $1, subtitle = $2, description = $3, image_url = $4, stats = $5 WHERE id = $6 RETURNING *",
+      [updateData.title, updateData.subtitle, updateData.description, updateData.image_url, updateData.stats, body.id]
     )
 
     if (rows.length === 0) {

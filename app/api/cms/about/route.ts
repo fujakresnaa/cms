@@ -12,6 +12,8 @@ export async function GET() {
         title: "About Us",
         description: "The Mercedes-Benz W205CI Club is more than a club...",
         button_text: "Learn More",
+        image_url_1: "/images/about-1.jpg",
+        image_url_2: "/images/about-2.jpg",
       })
     }
 
@@ -23,6 +25,8 @@ export async function GET() {
       title: "About Us",
       description: "The Mercedes-Benz W205CI Club is more than a club...",
       button_text: "Learn More",
+      image_url_1: "/images/about-1.jpg",
+      image_url_2: "/images/about-2.jpg",
     })
   }
 }

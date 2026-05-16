@@ -5,7 +5,7 @@ import useEmblaCarousel from "embla-carousel-react"
 import Autoplay from "embla-carousel-autoplay"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 
 interface ShowcaseItem {
   id: string
@@ -23,7 +23,7 @@ export function ShowcaseSection() {
       loop: true,
       align: "center",
       skipSnaps: false,
-      duration: 30, // Optimized transition duration for smoothness
+      duration: 50, // Increased for smoother, more cinematic feel
     },
     [
       Autoplay({
@@ -129,7 +129,7 @@ export function ShowcaseSection() {
   if (loading) return null
 
   return (
-    <section className="py-32 px-4 sm:px-6 lg:px-8 bg-background overflow-hidden relative ambient-glow">
+    <section className="py-32 px-4 sm:px-6 lg:px-8 bg-background overflow-hidden relative ambient-glow bg-gradient-to-b from-background via-muted/30 to-background">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <motion.div 
@@ -155,54 +155,86 @@ export function ShowcaseSection() {
               {showcase.map((item, index) => {
                 const isSelected = selectedIndex === index;
                 return (
-                  <div
+                  <motion.div
                     key={item.id}
-                    className="pl-4 flex-[0_0_85%] min-w-0 sm:flex-[0_0_65%] md:flex-[0_0_55%] lg:flex-[0_0_48%] relative"
+                    className="pl-4 flex-[0_0_85%] min-w-0 sm:flex-[0_0_65%] md:flex-[0_0_55%] lg:flex-[0_0_48%] relative py-10"
+                    style={{ zIndex: isSelected ? 10 : 1 }}
+                    animate={{ zIndex: isSelected ? 10 : 1 }}
                   >
+                    {/* Background Blur Glow (Originating from center) */}
+                    <AnimatePresence>
+                      {isSelected && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 0.25, scale: 1.2 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="absolute inset-0 z-0 pointer-events-none"
+                        >
+                          <div 
+                            className="absolute inset-0 blur-[100px] rounded-full"
+                            style={{ 
+                              background: `radial-gradient(circle, var(--primary) 0%, transparent 70%)`,
+                              transform: 'translateY(-10%)'
+                            }}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     <motion.div
                       animate={{
                         scale: isSelected ? 1.15 : 0.85,
-                        zIndex: isSelected ? 10 : 1,
+                        x: isSelected ? 0 : (index < selectedIndex ? "25%" : "-25%"),
+                        rotateY: isSelected ? 0 : (index < selectedIndex ? 15 : -15),
+                        filter: isSelected ? "brightness(1)" : "brightness(0.85)",
                       }}
                       transition={{
                         type: "spring",
-                        stiffness: 260,
-                        damping: 20,
-                        mass: 1,
+                        stiffness: 100,
+                        damping: 25,
+                        mass: 0.8,
                       }}
-                      className={`relative aspect-[16/10] overflow-hidden rounded-sm group cursor-pointer ${
-                        isSelected ? 'shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8),0_20px_40px_-15px_rgba(212,175,55,0.2)]' : 'shadow-none'
+                      style={{ perspective: "1000px" }}
+                      className={`relative aspect-[16/10] overflow-hidden rounded-sm group cursor-pointer transition-shadow duration-500 ${
+                        isSelected ? 'shadow-[0_40px_100px_-20px_rgba(0,0,0,0.8),0_0_40px_rgba(212,175,55,0.3)]' : 'shadow-none'
                       }`}
                     >
                       <img
                         src={item.image_url || "/placeholder.svg"}
                         alt={item.title || "Showcase vehicle"}
-                        className="w-full h-full object-cover will-change-transform transform group-hover:scale-110 transition-transform duration-1000 ease-out"
+                        className="w-full h-full object-cover will-change-transform transform group-hover:scale-105 transition-transform duration-1000 ease-out"
                         onError={(e) => {
                           e.currentTarget.src = "/placeholder.svg"
                         }}
                       />
                       {/* Inner edge glow for premium feel */}
                       <div className="absolute inset-0 pointer-events-none border border-white/5" />
+                      
+                      {/* Suble overlay for non-selected items */}
+                      {!isSelected && (
+                        <div className="absolute inset-0 bg-black/10 transition-opacity duration-500" />
+                      )}
                     </motion.div>
                     
                     {/* Floor Shadow / Reflection Effect */}
                     <motion.div 
                       animate={{ 
-                        opacity: isSelected ? 0.8 : 0.3,
-                        scaleX: isSelected ? 1.1 : 0.9,
-                        y: isSelected ? 35 : 20
+                        opacity: isSelected ? 0.8 : 0.2,
+                        scaleX: isSelected ? 1.2 : 0.8,
+                        y: isSelected ? 45 : 25
                       }}
+                      transition={{ duration: 0.8, ease: "circOut" }}
                       className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[85%] h-6 bg-primary/40 blur-3xl rounded-full pointer-events-none"
                     />
                     <motion.div 
                       animate={{ 
-                        opacity: isSelected ? 1 : 0.5,
-                        y: isSelected ? 40 : 25
+                        opacity: isSelected ? 1 : 0.4,
+                        y: isSelected ? 50 : 30
                       }}
+                      transition={{ duration: 0.8, ease: "circOut" }}
                       className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-[95%] h-8 bg-black/90 blur-3xl rounded-full pointer-events-none" 
                     />
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>

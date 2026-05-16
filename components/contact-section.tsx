@@ -81,6 +81,10 @@ export function ContactSection() {
     <section id="contact" className="py-32 px-4 sm:px-6 lg:px-8 bg-background relative overflow-hidden ambient-glow">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent pointer-events-none"></div>
       
+      {/* Abstract Background Accents */}
+      <div className="absolute top-1/4 -left-20 w-80 h-80 bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-1/4 -right-20 w-60 h-60 bg-primary/10 rounded-full blur-[80px] pointer-events-none"></div>
+      
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
           {/* Left - Contact Form */}
@@ -170,11 +174,11 @@ export function ContactSection() {
               <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 gap-8 border-t border-border/40 pt-10">
                 <div className="group/info">
                   <p className="font-accent text-primary mb-2 opacity-70 group-hover/info:opacity-100 transition-opacity">● Phone</p>
-                  <p className="text-xl font-sans font-bold text-foreground tracking-wide">{contactData.phone}</p>
+                  <p className="text-xl font-sans font-bold text-foreground tracking-wide">{contactData?.phone}</p>
                 </div>
                 <div className="group/info">
                   <p className="font-accent text-primary mb-2 opacity-70 group-hover/info:opacity-100 transition-opacity">● Email</p>
-                  <p className="text-xl font-sans font-bold text-foreground tracking-wide">{contactData.email}</p>
+                  <p className="text-xl font-sans font-bold text-foreground tracking-wide">{contactData?.email}</p>
                 </div>
               </div>
             )}
@@ -186,14 +190,50 @@ export function ContactSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.8 }}
-            className="relative overflow-hidden rounded-sm h-96 lg:h-full border border-white/5 group shadow-2xl"
+            className="relative h-96 lg:h-full group flex items-center justify-center p-8"
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent z-10"></div>
-            <img
-              src="/luxury-car-steering-wheel-dashboard-premium-interi.jpg"
-              alt="Mercedes W205CI Interior"
-              className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110"
-            />
+            {/* Abstract Graphics STRICTLY BEHIND Image */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/20 rounded-full blur-[100px] -z-10 animate-pulse"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/10 rounded-full blur-[80px] -z-10"></div>
+            
+            {/* Larger Geometric Lines Behind */}
+            <svg className="absolute -inset-4 w-[110%] h-[110%] pointer-events-none opacity-30 -z-10" viewBox="0 0 100 100" preserveAspectRatio="none">
+              <path d="M0,20 L100,0 M0,80 L100,100 M20,0 L0,100 M80,0 L100,100 M50,0 L50,100 M0,50 L100,50" stroke="currentColor" strokeWidth="0.05" fill="none" className="text-primary" />
+              <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="0.05" fill="none" className="text-primary/40" />
+            </svg>
+
+            {/* Decorative Corner Accents Behind */}
+            <div className="absolute top-0 left-0 w-32 h-32 border-l border-t border-primary/20 -z-10"></div>
+            <div className="absolute bottom-0 right-0 w-32 h-32 border-r border-b border-primary/20 -z-10"></div>
+
+            <div className="relative overflow-hidden rounded-sm w-full h-full border border-white/5 shadow-2xl z-0">
+              <div className="absolute inset-0 bg-gradient-to-t from-background/40 via-transparent to-transparent z-10"></div>
+              <img
+                src="/luxury-car-steering-wheel-dashboard-premium-interi.jpg"
+                alt="Mercedes W205CI Interior"
+                className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
+              />
+            </div>
+            
+            {/* Floating Element Outside/Beside Image */}
+            <motion.div 
+              animate={{ 
+                y: [0, -10, 0],
+                x: [0, 5, 0]
+              }}
+              transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute -top-4 -right-4 p-4 bg-card/80 backdrop-blur-xl border border-primary/20 rounded-sm z-20 hidden xl:block shadow-2xl"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <div>
+                  <p className="font-accent text-[8px] opacity-60">RESPONSE</p>
+                  <p className="text-xs font-bold tracking-widest">RAPID</p>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>

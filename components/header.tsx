@@ -60,13 +60,7 @@ export function Header() {
           <Link href="#contact" className="text-sm text-foreground/80 hover:text-primary transition-colors font-medium">
             Contact
           </Link>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 flex items-center justify-center opacity-70">🌐</div>
-            <select className="text-foreground/80 text-sm border-0 bg-transparent hover:text-primary focus:ring-0 cursor-pointer">
-              <option className="bg-background text-foreground">English</option>
-              <option className="bg-background text-foreground">Indonesia</option>
-            </select>
-          </div>
+
         </div>
 
         {/* Mobile Menu Button */}

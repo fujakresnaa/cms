@@ -24,6 +24,7 @@ import {
   Globe,
   ClipboardList,
   RefreshCcw,
+  Upload,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ImagePreview } from "./image-preview"
@@ -57,6 +58,8 @@ interface CMSAbout {
   title: string
   description: string
   button_text: string
+  image_url_1?: string
+  image_url_2?: string
 }
 
 interface CMSBenefit {
@@ -106,7 +109,9 @@ interface ContactSection {
 interface MembershipSection {
   id: string
   title: string
+  subtitle: string
   description: string
+  image_url: string
   stats: Array<{ label: string; value: string }>
 }
 
@@ -281,7 +286,7 @@ export function AdminDashboard() {
   const [regEndDate, setRegEndDate] = useState("")
 
 
-  const [about, setAbout] = useState<CMSAbout>({ id: "", title: "", description: "", button_text: "" })
+  const [about, setAbout] = useState<CMSAbout>({ id: "", title: "", description: "", button_text: "", image_url_1: "", image_url_2: "" })
   const [benefits, setBenefits] = useState<CMSBenefit[]>([])
   const [socialMedia, setSocialMedia] = useState<CMSSocial[]>([])
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([])
@@ -290,7 +295,7 @@ export function AdminDashboard() {
   const [isFetchingRegistrations, setIsFetchingRegistrations] = useState(false)
 
   const [contact, setContact] = useState<ContactSection>({ id: "", title: "", description: "", phone: "", email: "" })
-  const [membership, setMembership] = useState<MembershipSection>({ id: "", title: "", description: "", stats: [] })
+  const [membership, setMembership] = useState<MembershipSection>({ id: "", title: "", subtitle: "", description: "", image_url: "", stats: [] })
   const [logo, setLogo] = useState<Logo>({ id: "", text: "", subtext: "", image_url: "" })
   const [hero, setHero] = useState<Hero>({ id: "", title: "", description: "", button_text: "" })
   const [footer, setFooter] = useState<Footer>({
@@ -389,7 +394,7 @@ export function AdminDashboard() {
       ] = results
 
       if (aboutRes.status === "fulfilled") {
-        setAbout(aboutRes.value || { id: "", title: "About Us", description: "", button_text: "Learn More" })
+        setAbout(aboutRes.value || { id: "", title: "About Us", description: "", button_text: "Learn More", image_url_1: "", image_url_2: "" })
       }
       if (benefitsRes.status === "fulfilled") {
         setBenefits(benefitsRes.value?.data || [])
@@ -407,7 +412,7 @@ export function AdminDashboard() {
         setContact(contactRes.value || { id: "", title: "Contact Us", description: "", phone: "", email: "" })
       }
       if (membershipRes.status === "fulfilled") {
-        setMembership(membershipRes.value || { id: "", title: "Membership", description: "", stats: [] })
+        setMembership(membershipRes.value || { id: "", title: "Membership", subtitle: "", description: "", image_url: "", stats: [] })
       }
       if (logoRes.status === "fulfilled") {
         setLogo(logoRes.value || { id: "", text: "MBW", subtext: "Motorsport", image_url: "" })
@@ -446,13 +451,13 @@ export function AdminDashboard() {
       console.log("[Admin] CMS data fetched successfully")
     } catch (error) {
       console.error("[Admin] Error fetching CMS data:", error)
-      setAbout({ id: "default", title: "About Us", description: "", button_text: "Learn More" })
+      setAbout({ id: "default", title: "About Us", description: "", button_text: "Learn More", image_url_1: "", image_url_2: "" })
       setBenefits([])
       setSocialMedia([])
       setContactMessages([])
       setEvents([])
       setContact({ id: "default", title: "Contact Us", description: "", phone: "", email: "" })
-      setMembership({ id: "default", title: "Membership", description: "", stats: [] })
+      setMembership({ id: "default", title: "Membership", subtitle: "", description: "", image_url: "", stats: [] })
       setLogo({ id: "default", text: "MBW", subtext: "Motorsport", image_url: "" })
       setHero({
         id: "default",
@@ -1011,6 +1016,12 @@ export function AdminDashboard() {
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
+        
+        // Client-side size validation (15MB)
+        if (file.size > 15 * 1024 * 1024) {
+          alert(`File ${file.name} is too large. Maximum size is 15MB.`)
+          continue
+        }
 
         // Create FormData with the file directly
         const formData = new FormData()
@@ -1108,21 +1119,7 @@ export function AdminDashboard() {
 
         {sidebarOpen && (
           <div className="p-4 border-t border-white/10 space-y-2">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10">
-              <Globe className="w-4 h-4" />
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value as "en" | "id")}
-                className="bg-transparent text-white text-sm border-none outline-none flex-1"
-              >
-                <option value="en" className="text-black">
-                  English
-                </option>
-                <option value="id" className="text-black">
-                  Bahasa Indonesia
-                </option>
-              </select>
-            </div>
+
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-2 p-3 rounded-lg text-white/70 hover:bg-white/10 transition"
@@ -2002,7 +1999,7 @@ export function AdminDashboard() {
                       <div className="text-center">
                         <Plus className="w-12 h-12 text-primary/40 mx-auto mb-4" />
                         <p className="text-foreground mb-2 font-medium">{t("dragDrop")}</p>
-                        <p className="text-sm text-foreground/60 mb-4">or click to select files (Max 5MB per image)</p>
+                        <p className="text-sm text-foreground/60 mb-4">or click to select files (Max 15MB per image)</p>
                         <Button className="bg-primary hover:bg-primary/90 text-white">
                           <Plus className="w-4 h-4 mr-2" />
                           {t("selectImages")}
@@ -2137,6 +2134,80 @@ export function AdminDashboard() {
                             className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                           />
                         </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-foreground mb-2">About Image 1 (Top Stack)</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={about.image_url_1 || ""}
+                                onChange={(e) => setAbout({ ...about, image_url_1: e.target.value })}
+                                className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="/images/about-1.jpg"
+                              />
+                              <input
+                                type="file"
+                                id="about-image-1"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) {
+                                    const formData = new FormData()
+                                    formData.append("file", file)
+                                    const res = await fetch("/api/upload", { method: "POST", body: formData })
+                                    const data = await res.json()
+                                    if (data.url) setAbout({ ...about, image_url_1: data.url })
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => document.getElementById("about-image-1")?.click()}
+                                className="bg-secondary/20 border-primary/20 hover:bg-secondary/40"
+                              >
+                                <Upload className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-foreground mb-2">About Image 2 (Bottom Stack)</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={about.image_url_2 || ""}
+                                onChange={(e) => setAbout({ ...about, image_url_2: e.target.value })}
+                                className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                placeholder="/images/about-2.jpg"
+                              />
+                              <input
+                                type="file"
+                                id="about-image-2"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files?.[0]
+                                  if (file) {
+                                    const formData = new FormData()
+                                    formData.append("file", file)
+                                    const res = await fetch("/api/upload", { method: "POST", body: formData })
+                                    const data = await res.json()
+                                    if (data.url) setAbout({ ...about, image_url_2: data.url })
+                                  }
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => document.getElementById("about-image-2")?.click()}
+                                className="bg-secondary/20 border-primary/20 hover:bg-secondary/40"
+                              >
+                                <Upload className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                         <Button
                           onClick={updateAbout}
                           disabled={isSaving}
@@ -2215,28 +2286,89 @@ export function AdminDashboard() {
                   {membership &&
                     membership.id && ( // Check for membership.id to ensure it's loaded
                       <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
-                          <input
-                            type="text"
-                            value={membership.title}
-                            onChange={(e) => setMembership({ ...membership, title: e.target.value })}
-                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
-                          />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-semibold text-foreground mb-2">Title</label>
+                            <input
+                              type="text"
+                              value={membership.title}
+                              onChange={(e) => setMembership({ ...membership, title: e.target.value })}
+                              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-semibold text-foreground mb-2">Subtitle (Badge)</label>
+                            <input
+                              type="text"
+                              value={membership.subtitle || ""}
+                              onChange={(e) => setMembership({ ...membership, subtitle: e.target.value })}
+                              className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              placeholder="e.g. ● THE BROTHERHOOD"
+                            />
+                          </div>
                         </div>
                         <div>
                           <label className="block text-sm font-semibold text-foreground mb-2">Description</label>
                           <textarea
                             value={membership.description}
                             onChange={(e) => setMembership({ ...membership, description: e.target.value })}
-                            rows={4}
+                            rows={3}
                             className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-semibold text-foreground mb-2">Stats</label>
+                          <label className="block text-sm font-semibold text-foreground mb-2">Membership Image</label>
+                          <div className="flex gap-2">
+                            <input
+                              type="text"
+                              value={membership.image_url || ""}
+                              onChange={(e) => setMembership({ ...membership, image_url: e.target.value })}
+                              className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                              placeholder="/path/to/image.jpg"
+                            />
+                            <input
+                              type="file"
+                              id="membership-image"
+                              className="hidden"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  const formData = new FormData()
+                                  formData.append("file", file)
+                                  const res = await fetch("/api/upload", { method: "POST", body: formData })
+                                  const data = await res.json()
+                                  if (data.url) setMembership({ ...membership, image_url: data.url })
+                                }
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => document.getElementById("membership-image")?.click()}
+                              className="bg-secondary/20 border-primary/20 hover:bg-secondary/40"
+                            >
+                              <Upload className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <label className="block text-sm font-semibold text-foreground">Stats</label>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => {
+                                const newStats = [...membership.stats, { label: "", value: "" }];
+                                setMembership({ ...membership, stats: newStats });
+                              }}
+                              className="h-8 text-xs"
+                            >
+                              + Add Stat
+                            </Button>
+                          </div>
                           {membership.stats.map((stat, idx) => (
-                            <div key={idx} className="grid grid-cols-2 gap-4 mb-2">
+                            <div key={idx} className="flex gap-2 mb-2 items-start">
                               <input
                                 type="text"
                                 value={stat.label}
@@ -2246,7 +2378,7 @@ export function AdminDashboard() {
                                   setMembership({ ...membership, stats: newStats })
                                 }}
                                 placeholder="Label"
-                                className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                               />
                               <input
                                 type="text"
@@ -2257,8 +2389,19 @@ export function AdminDashboard() {
                                   setMembership({ ...membership, stats: newStats })
                                 }}
                                 placeholder="Value"
-                                className="px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
                               />
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                  const newStats = membership.stats.filter((_, i) => i !== idx);
+                                  setMembership({ ...membership, stats: newStats });
+                                }}
+                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
                             </div>
                           ))}
                         </div>
