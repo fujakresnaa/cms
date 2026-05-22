@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { MetadataRoute } from 'next'
 import pool from '@/lib/db'
 

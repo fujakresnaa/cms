@@ -3,19 +3,12 @@ export const dynamic = 'force-dynamic'
 import type React from "react"
 import type { Metadata } from "next"
 
-import { Outfit, Cormorant_Garamond } from "next/font/google"
+import { Outfit } from "next/font/google"
 import "./globals.css"
 
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-sans",
-  display: "swap",
-})
-
-const cormorant = Cormorant_Garamond({
-  subsets: ["latin"],
-  variable: "--font-serif",
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 })
 
@@ -84,7 +77,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`dark ${outfit.variable} ${cormorant.variable}`}>
+    <html lang="en" className={`dark ${outfit.variable}`}>
       <body className="antialiased font-sans" suppressHydrationWarning>
         <script
           type="application/ld+json"
