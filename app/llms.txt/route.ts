@@ -48,6 +48,7 @@ The Mercedes-Benz W205CI Club Indonesia is the official community dedicated to M
 ## Membership & Joining
 
 Becoming an official member of W205CI Club Indonesia grants access to exclusive perks, technical sharing, and premium gatherings.
+
 - [Registration](${baseUrl}/register) - Official online membership application form for Mercedes-Benz W205 owners wishing to join the club.
 
 ## Core Navigation
@@ -62,10 +63,12 @@ ${eventsListMarkdown}
 
 - [Instagram](https://www.instagram.com/MBW205clubina) - Official W205CI Club Instagram account.
 - [Facebook](https://www.facebook.com/w205ci) - Official W205CI Club Facebook page.
-
 `
 
-  return new Response(content, {
+  // Normalize all line endings to Unix (LF) and ensure exactly one trailing newline
+  const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim() + '\n'
+
+  return new Response(normalizedContent, {
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'public, max-age=3600, must-revalidate',
