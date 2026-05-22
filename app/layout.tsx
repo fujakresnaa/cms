@@ -103,7 +103,7 @@ export default function RootLayout({
               "url": process.env.NEXT_PUBLIC_BASE_URL || "https://mbw205ci.com",
               "logo": `${process.env.NEXT_PUBLIC_BASE_URL || "https://mbw205ci.com"}/placeholder-logo.png`,
               "sameAs": [
-                "https://www.instagram.com/w205ci", // Example
+                "https://www.instagram.com/MBW205clubina",
                 "https://www.facebook.com/w205ci"  // Example
               ],
               "description": "The official community for Mercedes-Benz W205 enthusiasts in Indonesia."
